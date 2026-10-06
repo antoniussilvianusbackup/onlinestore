@@ -45,9 +45,7 @@ $homeAuctions = array_slice(array_values(array_filter(getCommunityAuctions(), fu
         <div class="d-flex gap-2 flex-wrap">
           <a href="#shop" class="btn btn-light"><i class="fa fa-cart-plus me-1"></i> Jelajahi Produk</a>
           <!-- <a href="#about" class="btn btn-outline-light btn-lg">Kenapa Kami</a> -->
-          <a href="seller_login.php" class="btn btn-success">Login Seller</a>
         </div>
-        <div class="small mt-2" style="opacity:0.9;">Demo seller: <strong>sellerdemo</strong> / <strong>seller123</strong></div>
       </div>
       <div class="col-md-5">
         <div class="glass-card store-feature-panel grid-icons">

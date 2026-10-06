@@ -25,7 +25,9 @@ try{
 ?>
 <?php include '../header.php'; ?>
 <style>
-  .product-admin-toolbar { display:flex; flex-wrap:wrap; gap:.65rem; }
+  .product-admin-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem; }
+  .product-admin-toolbar .btn { display:inline-flex; align-items:center; justify-content:center; gap:.45rem; min-height:42px; white-space:nowrap; }
+  .product-admin-toolbar .product-admin-create { margin-left:.25rem; }
   .product-admin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr)); gap:1rem; }
   .product-admin-card { overflow:hidden; height:100%; }
   .product-admin-image { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; background:#e8eee2; }
@@ -38,16 +40,20 @@ try{
   .existing-image-option img { display:block; width:100%; aspect-ratio:1; object-fit:cover; background:#e8eee2; }
   .existing-image-option .form-check-input { position:absolute; z-index:1; top:.4rem; left:.4rem; margin:0; }
   .existing-image-option span { display:block; overflow:hidden; padding:.35rem; font-size:.68rem; text-overflow:ellipsis; white-space:nowrap; }
-  @media (max-width:575.98px) { .product-admin-toolbar > a { flex:1 1 calc(50% - .65rem); } .product-admin-toolbar > a:last-child { flex-basis:100%; } }
+  @media (max-width:575.98px) {
+    .product-admin-toolbar { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; }
+    .product-admin-toolbar .btn { width:100%; white-space:normal; }
+    .product-admin-toolbar .product-admin-create { grid-column:1 / -1; margin-left:0; }
+  }
 </style>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
   <div><h1 class="mb-1">Produk</h1><div class="text-muted">Kelola katalog dan informasi produk.</div></div>
   <div class="product-admin-toolbar">
-    <a href="sellers.php" class="btn btn-outline-secondary"><i class="fa fa-store"></i> Kelola Seller</a>
-    <a href="voucher_rewards.php" class="btn btn-outline-success"><i class="fa fa-gift"></i> Kelola Reward Voucher</a>
-    <a href="community.php" class="btn btn-outline-success"><i class="fa fa-seedling"></i> Kelola Komunitas</a>
-    <a href="orders.php" class="btn btn-outline-primary"><i class="fa fa-receipt"></i> Verifikasi Pesanan</a>
-    <a href="products.php?action=new" class="btn btn-primary"><i class="fa fa-plus"></i> Produk Baru</a>
+    <a href="sellers.php" class="btn btn-outline-success"><i class="fa fa-store"></i><span>Kelola Seller</span></a>
+    <a href="voucher_rewards.php" class="btn btn-outline-success"><i class="fa fa-gift"></i><span>Reward Voucher</span></a>
+    <a href="community.php" class="btn btn-outline-success"><i class="fa fa-seedling"></i><span>Komunitas</span></a>
+    <a href="orders.php" class="btn btn-outline-success"><i class="fa fa-receipt"></i><span>Verifikasi Pesanan</span></a>
+    <a href="products.php?action=new" class="btn btn-primary product-admin-create"><i class="fa fa-plus"></i><span>Produk Baru</span></a>
   </div>
 </div>
 <?php if($error): ?><div class="alert alert-danger"><?php echo esc($error); ?></div><?php endif; ?>

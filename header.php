@@ -519,6 +519,7 @@ $isCustomer = !empty($_SESSION['customer_id']);
                   <?php if($isAdmin): ?><li><hr class="dropdown-divider"></li><?php endif; ?>
                   <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>account.php"><i class="fa-solid fa-circle-user"></i>Akun pelanggan</a></li>
                 <?php endif; ?>
+                <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>seller_login.php"><i class="fa-solid fa-store"></i>Login seller</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-danger" href="<?php echo $BASE_PATH; ?>logout.php"><i class="fa-solid fa-right-from-bracket text-danger"></i>Keluar</a></li>
               </ul>
@@ -529,6 +530,8 @@ $isCustomer = !empty($_SESSION['customer_id']);
               <ul class="dropdown-menu dropdown-menu-end site-nav-menu" aria-labelledby="loginMenu">
                 <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>customer_login.php"><i class="fa-solid fa-user"></i>Login pelanggan</a></li>
                 <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>customer_register.php"><i class="fa-solid fa-user-plus"></i>Daftar pelanggan</a></li>
+                <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>seller_login.php"><i class="fa-solid fa-store"></i>Login seller</a></li>
+                <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>admin/login.php"><i class="fa-solid fa-user-shield"></i>Login admin</a></li>
               </ul>
             </li>
