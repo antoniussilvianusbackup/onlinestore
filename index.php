@@ -2,9 +2,23 @@
 
 <!-- Rebelstuff Hero -->
 <section class="mb-5">
-  <div class="p-4 p-md-5 rounded-4 hero-gradient shadow-sm">
+  <style>
+    .store-hero { padding:1.5rem; border-radius:16px; }
+    .store-hero h1 { max-width:24ch; line-height:1; }
+    .store-hero .lead { max-width:38rem; font-size:1.1rem; }
+    .store-hero .btn { padding:.65rem .9rem; }
+    .store-feature-panel { padding:1rem; border-radius:12px; box-shadow:0 8px 22px rgba(17,41,23,.12); }
+    .store-feature { display:flex; align-items:center; gap:.8rem; padding:.75rem 0; }
+    .store-feature + .store-feature { border-top:1px solid rgba(34,52,38,.12); }
+    .store-feature .icon { flex:0 0 40px; width:40px; height:40px; border-radius:10px; }
+    .store-feature-copy { min-width:0; }
+    .store-feature-copy .small { line-height:1.4; }
+    @media (min-width:768px) { .store-hero { padding:2rem; } }
+    @media (max-width:767.98px) { .store-hero h1 { max-width:11ch; } .store-hero .btn { flex:1 1 auto; } }
+  </style>
+  <div class="store-hero rounded-4 hero-gradient shadow-sm">
     <div class="row g-4 align-items-center">
-      <div class="col-lg-7">
+      <div class="col-md-7">
         <h1 class="display-6 fw-bold mb-3">Terra Kala Eco Recycled Store</h1>
         <p class="lead mb-3">Tempat belanja produk ramah lingkungan yang dibuat dari material daur ulang, modern, dan tetap stylish.</p>
         <div class="d-flex gap-2 flex-wrap mb-3">
@@ -13,31 +27,31 @@
           <span class="badge pill-badge">Zero Waste Mindset</span>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-          <a href="#shop" class="btn btn-light btn-lg"><i class="fa fa-cart-plus me-1"></i> Jelajahi Produk</a>
-          <a href="#about" class="btn btn-outline-light btn-lg">Kenapa Kami</a>
-          <a href="seller_login.php" class="btn btn-success btn-lg">Login Seller</a>
+          <a href="#shop" class="btn btn-light"><i class="fa fa-cart-plus me-1"></i> Jelajahi Produk</a>
+          <!-- <a href="#about" class="btn btn-outline-light btn-lg">Kenapa Kami</a> -->
+          <a href="seller_login.php" class="btn btn-success">Login Seller</a>
         </div>
         <div class="small mt-2" style="opacity:0.9;">Demo seller: <strong>sellerdemo</strong> / <strong>seller123</strong></div>
       </div>
-      <div class="col-lg-5">
-        <div class="glass-card rounded-4 p-3 p-md-4 grid-icons">
-          <div class="d-flex align-items-start mb-3">
-            <div class="icon me-3"><i class="fa-solid fa-bolt"></i></div>
-            <div>
+      <div class="col-md-5">
+        <div class="glass-card store-feature-panel grid-icons">
+          <div class="store-feature">
+            <div class="icon"><i class="fa-solid fa-bolt"></i></div>
+            <div class="store-feature-copy">
               <div class="fw-semibold">Filosofi Desain</div>
               <div class="small">Kebebasan berekspresi & estetika urban yang berani.</div>
             </div>
           </div>
-          <div class="d-flex align-items-start mb-3">
-            <div class="icon me-3"><i class="fa-solid fa-star"></i></div>
-            <div>
+          <div class="store-feature">
+            <div class="icon"><i class="fa-solid fa-star"></i></div>
+            <div class="store-feature-copy">
               <div class="fw-semibold">Komitmen Kualitas</div>
               <div class="small">Material nyaman, detail rapi, dipakai pede seharian.</div>
             </div>
           </div>
-          <div class="d-flex align-items-start">
-            <div class="icon me-3"><i class="fa-solid fa-fire"></i></div>
-            <div>
+          <div class="store-feature">
+            <div class="icon"><i class="fa-solid fa-fire"></i></div>
+            <div class="store-feature-copy">
               <div class="fw-semibold">Spirit Rebel</div>
               <div class="small">Berani tampil autentik tanpa takut penilaian orang.</div>
             </div>
@@ -246,9 +260,10 @@
 <!-- Pilih Model & Ukuran -->
 <section class="mt-4" id="shop">
   <style>
-    .catalog-product-image { height:220px; background:#e8eee2; display:grid; place-items:center; color:#65735d; }
-    .catalog-product-image img { width:100%; height:100%; object-fit:cover; }
-    .catalog-product-image-fallback { text-align:center; padding:1rem; }
+    .product-card > .card { height:100%; overflow:hidden; }
+    .catalog-product-image { position:relative; flex:0 0 220px; height:220px; overflow:hidden; background:#e8eee2; display:flex; align-items:center; justify-content:center; color:#65735d; }
+    .catalog-product-image img { display:block; width:100%; height:100%; object-fit:cover; object-position:center; }
+    .catalog-product-image-fallback { display:grid; place-content:center; width:100%; height:100%; text-align:center; padding:1rem; }
   </style>
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>

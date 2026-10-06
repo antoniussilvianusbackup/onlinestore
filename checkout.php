@@ -64,20 +64,39 @@ if(!$cart){
 
 include 'header.php';
 ?>
+<style>
+  .checkout-summary-table { width:100%; min-width:640px; table-layout:fixed; font-variant-numeric:tabular-nums; }
+  .checkout-summary-table th,
+  .checkout-summary-table td { vertical-align:middle; }
+  .checkout-summary-table th:nth-child(4),
+  .checkout-summary-table th:nth-child(5),
+  .checkout-summary-table th:nth-child(6),
+  .checkout-summary-table th:nth-child(3),
+  .checkout-summary-table td:nth-child(3),
+  .checkout-summary-table td:nth-child(4),
+  .checkout-summary-table td:nth-child(5),
+  .checkout-summary-table td:nth-child(6),
+  .checkout-summary-table tfoot th:last-child { white-space:nowrap; }
+  .checkout-summary-table tfoot th:first-child { white-space:nowrap; }
+  .checkout-summary-table th:nth-child(1) { width:30%; }
+  .checkout-summary-table th:nth-child(2) { width:13%; }
+  .checkout-summary-table th:nth-child(3) { width:12%; }
+  .checkout-summary-table th:nth-child(4) { width:17%; }
+  .checkout-summary-table th:nth-child(5) { width:8%; }
+  .checkout-summary-table th:nth-child(6) { width:20%; }
+  .checkout-money-row { gap:.5rem; }
+  .checkout-money-row strong { white-space:nowrap; font-variant-numeric:tabular-nums; }
+  @media (max-width:380px) {
+    .checkout-money-row { flex-wrap:wrap; }
+    .checkout-money-row strong { margin-left:auto; }
+  }
+</style>
 <div class="row g-3 align-items-start">
-  <div class="col-lg-7">
+  <div class="col-lg-8">
     <div class="card p-3">
       <h4 class="mb-2">Ringkasan Pesanan</h4>
       <div class="table-responsive">
-        <table class="table table-sm align-middle mb-2" style="table-layout: fixed; width: 100%;">
-          <colgroup>
-            <col style="width: 34%;">
-            <col style="width: 18%;">
-            <col style="width: 12%;">
-            <col style="width: 12%;">
-            <col style="width: 8%;">
-            <col style="width: 16%;">
-          </colgroup>
+        <table class="table table-sm align-middle mb-2 checkout-summary-table">
           <thead><tr><th>Produk</th><th>Seller</th><th>Ukuran</th><th class="text-end">Harga</th><th class="text-center">Qty</th><th class="text-end">Subtotal</th></tr></thead>
           <tbody>
           <?php foreach($cart as $item): $isReward = !empty($item['is_reward']); $st = $isReward ? 0 : ($item['price'] * $item['qty']); ?>
@@ -115,7 +134,7 @@ include 'header.php';
     </div>
   </div>
 
-  <div class="col-lg-5">
+  <div class="col-lg-4">
     <div class="card p-3">
       <h4 class="mb-2">Alamat Pengiriman</h4>
       <form method="post" action="place_order.php" novalidate>
@@ -172,11 +191,11 @@ include 'header.php';
         <input type="hidden" name="shipping_cost" id="shipping_cost" value="0">
 
         <div class="border-top mt-2 pt-2">
-          <div class="d-flex justify-content-between"><span>Subtotal</span><strong id="subtotal_text"><?php echo formatRupiah($subtotal); ?></strong></div>
-          <div class="d-flex justify-content-between"><span>Biaya layanan (5%)</span><strong id="service_fee_text"><?php echo formatRupiah($serviceFee); ?></strong></div>
-          <div class="d-flex justify-content-between"><span>Ongkir</span><strong id="shipping_text">Rp 0</strong></div>
+          <div class="d-flex justify-content-between checkout-money-row"><span>Subtotal</span><strong id="subtotal_text"><?php echo formatRupiah($subtotal); ?></strong></div>
+          <div class="d-flex justify-content-between checkout-money-row"><span>Biaya layanan (5%)</span><strong id="service_fee_text"><?php echo formatRupiah($serviceFee); ?></strong></div>
+          <div class="d-flex justify-content-between checkout-money-row"><span>Ongkir</span><strong id="shipping_text">Rp 0</strong></div>
           <hr>
-          <div class="d-flex justify-content-between fs-5"><span>Total</span><strong id="total_text"><?php echo formatRupiah($subtotal + $serviceFee); ?></strong></div>
+          <div class="d-flex justify-content-between checkout-money-row fs-5"><span>Total</span><strong id="total_text"><?php echo formatRupiah($subtotal + $serviceFee); ?></strong></div>
           <div class="mt-2 d-flex justify-content-end">
             <button class="btn btn-success btn-sm">Buat Pesanan</button>
           </div>
