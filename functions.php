@@ -1300,10 +1300,20 @@ function updateOrderPaymentStatus($orderId, $newStatus){
   }
 }
 
+function normalizeProductPrice($value){
+  if(!is_scalar($value)) throw new RuntimeException('Harga produk tidak valid.');
+  $digits = preg_replace('/\D+/', '', (string)$value);
+  if($digits === '') throw new RuntimeException('Harga produk wajib diisi.');
+  $price = (int)$digits;
+  if($price > 2147483647) throw new RuntimeException('Harga maksimal Rp 2.147.483.647.');
+  return $price;
+}
+
 function addProduct($data, $file){
   ensureProductsSchema();
   ensureSellersSchema();
   $pdo = getPDO();
+  $price = normalizeProductPrice($data['price'] ?? '');
   $imagePath = resolveExistingProductImage($data['existing_image_path'] ?? '');
   if(isset($file['image']) && $file['image']['error']===UPLOAD_ERR_OK){
     $imagePath = handleUpload($file['image']);
@@ -1313,7 +1323,7 @@ function addProduct($data, $file){
   $sellerIdRaw = $data['seller_id'] ?? '';
   $sellerId = ($sellerIdRaw !== '' && $sellerIdRaw !== null) ? (int)$sellerIdRaw : null;
   $st = $pdo->prepare("INSERT INTO products (name, description, price, image_path, sizes, seller_id, is_best_seller) VALUES (?,?,?,?,?,?,?)");
-  $st->execute([$data['name'], $data['description'], $data['price'], $imagePath, $sizes, $sellerId, !empty($data['is_best_seller'])?1:0]);
+  $st->execute([$data['name'], $data['description'], $price, $imagePath, $sizes, $sellerId, !empty($data['is_best_seller'])?1:0]);
 }
 function updateProduct($id, $data, $file){
   ensureProductsSchema();
@@ -1321,6 +1331,7 @@ function updateProduct($id, $data, $file){
   $pdo = getPDO();
   $product = getProduct($id);
   if(!$product){ throw new RuntimeException('Produk tidak ditemukan'); }
+  $price = normalizeProductPrice($data['price'] ?? '');
   $imagePath = $product['image_path'];
   $selectedImage = trim($data['existing_image_path'] ?? '');
   if($selectedImage !== '') $imagePath = resolveExistingProductImage($selectedImage);
@@ -1331,7 +1342,7 @@ function updateProduct($id, $data, $file){
   $sellerIdRaw = $data['seller_id'] ?? '';
   $sellerId = ($sellerIdRaw !== '' && $sellerIdRaw !== null) ? (int)$sellerIdRaw : null;
   $st = $pdo->prepare("UPDATE products SET name=?, description=?, price=?, image_path=?, sizes=?, seller_id=?, is_best_seller=? WHERE id=?");
-  $st->execute([$data['name'], $data['description'], $data['price'], $imagePath, $sizes, $sellerId, !empty($data['is_best_seller'])?1:0, $id]);
+  $st->execute([$data['name'], $data['description'], $price, $imagePath, $sizes, $sellerId, !empty($data['is_best_seller'])?1:0, $id]);
 }
 function getUploadedProductImages(){
   $paths = [];

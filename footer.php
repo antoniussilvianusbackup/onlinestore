@@ -1,6 +1,32 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+function formatRupiahInput(input, preserveCaret = true){
+  const original = input.value;
+  const caret = preserveCaret && typeof input.selectionStart === 'number' ? input.selectionStart : original.length;
+  const digitsBeforeCaret = original.slice(0, caret).replace(/\D/g, '').length;
+  const digits = original.replace(/\D/g, '');
+  const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  input.value = formatted;
+  if(preserveCaret && document.activeElement === input){
+    let position = 0;
+    let digitsSeen = 0;
+    while(position < formatted.length && digitsSeen < digitsBeforeCaret){
+      if(/\d/.test(formatted[position])) digitsSeen++;
+      position++;
+    }
+    input.setSelectionRange(position, position);
+  }
+}
+
+document.querySelectorAll('.rupiah-input').forEach((input) => formatRupiahInput(input, false));
+document.addEventListener('input', (event) => {
+  if(event.target.matches('.rupiah-input')) formatRupiahInput(event.target);
+});
+document.addEventListener('focusout', (event) => {
+  if(event.target.matches('.rupiah-input')) formatRupiahInput(event.target, false);
+});
+
 function ensureModal(){
   let modalEl = document.getElementById('addedModal');
   if(!modalEl){

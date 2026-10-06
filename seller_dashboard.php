@@ -78,8 +78,9 @@ include 'header.php';
           <input class="form-control" name="name" required value="<?php echo esc($editingProduct['name'] ?? ''); ?>">
         </div>
         <div class="col-md-3">
-          <label class="form-label">Harga</label>
-          <input class="form-control" type="number" min="0" name="price" required value="<?php echo esc($editingProduct['price'] ?? ''); ?>">
+          <label class="form-label">Harga (Rp)</label>
+          <input class="form-control rupiah-input" type="text" inputmode="numeric" autocomplete="off" maxlength="13" name="price" required value="<?php echo esc(number_format((int)($editingProduct['price'] ?? 0), 0, ',', '.')); ?>" placeholder="Contoh: 1.000.000">
+          <div class="form-text">Pemisah ribuan ditambahkan otomatis.</div>
         </div>
         <div class="col-md-3">
           <label class="form-label">Foto</label>

@@ -74,8 +74,9 @@ if(($action==='new') || ($action==='edit' && isset($_GET['id']))):
         <input class="form-control" name="name" required value="<?php echo esc($prod['name']); ?>">
       </div>
       <div class="col-md-3">
-        <label class="form-label">Harga (angka)</label>
-        <input class="form-control" name="price" type="number" min="0" required value="<?php echo esc($prod['price']); ?>">
+        <label class="form-label">Harga (Rp)</label>
+        <input class="form-control rupiah-input" name="price" type="text" inputmode="numeric" autocomplete="off" maxlength="13" required value="<?php echo esc(number_format((int)$prod['price'], 0, ',', '.')); ?>" placeholder="Contoh: 1.000.000">
+        <div class="form-text">Pemisah ribuan ditambahkan otomatis.</div>
       </div>
       <div class="col-md-3">
         <label class="form-label">Label</label>

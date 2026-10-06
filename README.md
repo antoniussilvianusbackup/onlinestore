@@ -68,13 +68,15 @@ Akun demo seller:
 
 Dengan akun seller, Anda bisa menambah, mengedit, dan menghapus produk sendiri.
 
-## 9. Fitur komunitas
+## 8. Panduan fitur
 
-Buka `community.php` untuk mengakses panduan DIY, mengirim video kreasi, mengikuti lelang, melihat peringkat pembeli dan seller, serta mengikuti kompetisi sekolah. Pelanggan harus login untuk mengirim video, menawar lelang, atau mengirim misi sekolah.
+Panduan cara menggunakan fitur toko, komunitas, lelang, DIY, kompetisi, poin, dan panel admin tersedia di [PANDUAN_FITUR.md](PANDUAN_FITUR.md). Halaman komunitas dapat dibuka melalui menu **Komunitas** atau langsung di `community.php`.
 
-Admin dapat mengelola materi, lelang, event sekolah, skor tim, serta moderasi kiriman melalui **Admin > Kelola Komunitas**. Video kreasi maksimal 50 MB dalam format MP4, WebM, atau MOV. File [`.user.ini`](.user.ini) mengatur batas 50 MB untuk PHP CGI/FastCGI. Untuk XAMPP Apache yang memakai mod_php, ubah `upload_max_filesize=50M` dan `post_max_size=52M` di `php.ini`, lalu restart Apache. Halaman komunitas menampilkan batas efektif yang sedang digunakan server.
+## 9. Pengaturan upload video
 
-Jika menjalankan PHP built-in server (`php -S`), pengaturan `php.ini` perlu diberikan saat server dimulai. Contoh dari folder project:
+Video kreasi maksimal 50 MB dalam format MP4, WebM, atau MOV. File [`.user.ini`](.user.ini) mengatur batas 50 MB untuk PHP CGI/FastCGI. Untuk XAMPP Apache yang memakai mod_php, ubah `upload_max_filesize=50M` dan `post_max_size=52M` di `php.ini`, lalu restart Apache. Halaman komunitas menampilkan batas efektif yang sedang digunakan server.
+
+Jika menjalankan PHP built-in server (`php -S`), berikan pengaturan `php.ini` saat server dimulai. Contoh dari folder project:
 
 ```sh
 php -d upload_max_filesize=50M -d post_max_size=52M -d max_execution_time=120 -d max_input_time=120 -S localhost:8000
@@ -82,11 +84,7 @@ php -d upload_max_filesize=50M -d post_max_size=52M -d max_execution_time=120 -d
 
 Restart server setelah mengubah konfigurasi agar batas baru aktif.
 
-Setiap order menambahkan biaya layanan 5% dari subtotal barang (di luar ongkir). Biaya ini ditampilkan di checkout, konfirmasi pesanan, dan invoice. Poin kreasi baru masuk setelah admin menyetujui video.
-
-Pesanan baru berstatus menunggu pembayaran. Admin memeriksa pembayaran secara manual melalui **Admin > Verifikasi Pesanan**; poin pembeli dan penjualan seller baru dihitung setelah order ditandai lunas. Untuk lelang, admin menutup lelang yang waktunya berakhir dari **Kelola Komunitas**; sistem menetapkan penawaran tertinggi dan membuat order pemenang yang harus diverifikasi pembayarannya. Event sekolah yang berakhir juga dapat ditutup di panel komunitas untuk mengunci tiga besar dan mencatat penyerahan hadiah.
-
-Bonus seller triwulanan tidak diberikan otomatis saat leaderboard dilihat. Admin memilih periode yang sudah berakhir dan menekan **Tutup periode** di panel komunitas; setiap periode hanya dapat diselesaikan satu kali.
+Untuk langkah penggunaan semua fitur, termasuk belanja, verifikasi pembayaran, lelang, DIY, kompetisi sekolah, poin, dan panel admin, lihat [PANDUAN_FITUR.md](PANDUAN_FITUR.md). Biaya layanan aplikasi saat ini 5% dari subtotal barang, di luar ongkir.
 
 ## 10. Jika ada masalah
 Coba cek hal-hal berikut:
