@@ -460,34 +460,78 @@ require_once __DIR__ . '/functions.php';
       border-radius: 14px;
       border: 1px solid var(--border);
     }
+    .site-navbar .container { gap:1rem; }
+    .site-nav-links { align-items:center; gap:.25rem; }
+    .site-nav-link { display:inline-flex; align-items:center; gap:.5rem; }
+    .site-cart-link { position:relative; display:inline-flex!important; align-items:center; justify-content:center; width:44px; height:44px; padding:0!important; border:1px solid var(--border); border-radius:12px!important; }
+    .site-cart-count { position:absolute; top:-5px; right:-5px; min-width:19px; height:19px; display:grid; place-items:center; padding:0 4px; border-radius:999px; background:var(--accent); color:#fff!important; font-size:.68rem; line-height:1; }
+    .site-nav-menu { border:1px solid var(--border); border-radius:12px; box-shadow:0 10px 24px rgba(34,52,38,.12); padding:.4rem; }
+    .site-nav-menu .dropdown-item { display:flex; align-items:center; gap:.6rem; padding:.6rem .75rem; border-radius:8px; }
+    .site-nav-menu .dropdown-item i { width:1rem; color:var(--accent); text-align:center; }
+    .site-nav-menu .dropdown-divider { margin:.35rem 0; }
+    .site-nav-toggle { border:0; background:transparent; }
+    @media (max-width:991.98px) {
+      .site-navbar .container { gap:.5rem; }
+      .site-nav-links { align-items:stretch; padding:.5rem 0 .25rem; }
+      .site-cart-link { width:auto; height:auto; min-height:44px; justify-content:flex-start; padding:.6rem .85rem!important; border:0; }
+      .site-cart-count { position:static; min-width:21px; height:21px; margin-left:.15rem; }
+      .site-nav-menu { border:0; box-shadow:none; padding-left:1rem; }
+    }
   </style>
 </head>
-<?php $BASE_PATH = (strpos($_SERVER['PHP_SELF'], '/admin/') !== false) ? '../' : ''; ?>
+<?php
+$BASE_PATH = (strpos($_SERVER['PHP_SELF'], '/admin/') !== false) ? '../' : '';
+$cartItemCount = isset($_SESSION['cart']) ? array_sum(array_map(function($item){ return (int)($item['qty'] ?? 0); }, $_SESSION['cart'])) : 0;
+$isAdmin = !empty($_SESSION['is_admin']);
+$isCustomer = !empty($_SESSION['customer_id']);
+?>
 
 <body>
-  <nav class="navbar bg-white navbar-expand-lg shadow-sm" style="background:#0b0b0e;">
+  <nav class="navbar bg-white navbar-expand-lg shadow-sm site-navbar">
     <div class="container">
       <a class="navbar-brand brand-neon" href="<?php echo $BASE_PATH; ?>index.php">
-        <img src="<?php echo $BASE_PATH; ?>logo1.png" alt="Logo" height="40">
+        <img src="<?php echo $BASE_PATH; ?>logo1.png" alt="Terra Kala" height="40">
       </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Buka navigasi">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div id="nav" class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>index.php">Produk</a></li>
-          <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>cart.php"><i class="fa fa-shopping-cart"></i> Keranjang (<?php echo isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'qty')) : 0; ?>)</a></li>
-          <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>admin/products.php">Admin</a></li>
-          <?php if (!empty($_SESSION['is_admin'])): ?><li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>admin/community.php">Kelola komunitas</a></li><li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>admin/orders.php">Verifikasi pesanan</a></li><?php endif; ?>
-          <?php if (!empty($_SESSION['customer_id'])): ?>
-            <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>account.php"><i class="fa fa-user"></i> Akun</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>customer_logout.php">Logout</a></li>
+        <ul class="navbar-nav ms-auto site-nav-links">
+          <li class="nav-item"><a class="nav-link site-nav-link" href="<?php echo $BASE_PATH; ?>index.php"><i class="fa-solid fa-house"></i><span>Beranda</span></a></li>
+          <li class="nav-item"><a class="nav-link site-nav-link" href="<?php echo $BASE_PATH; ?>community.php"><i class="fa-solid fa-seedling"></i><span>Komunitas</span></a></li>
+          <li class="nav-item">
+            <a class="nav-link site-cart-link" href="<?php echo $BASE_PATH; ?>cart.php" aria-label="Keranjang, <?php echo (int)$cartItemCount; ?> item" title="Keranjang">
+              <i class="fa-solid fa-bag-shopping"></i><span class="site-cart-count"><?php echo $cartItemCount > 99 ? '99+' : (int)$cartItemCount; ?></span>
+            </a>
+          </li>
+          <?php if($isAdmin || $isCustomer): ?>
+            <li class="nav-item dropdown">
+              <button class="nav-link dropdown-toggle site-nav-link site-nav-toggle" id="accountMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid <?php echo $isAdmin ? 'fa-user-shield' : 'fa-user'; ?>"></i><span><?php echo $isAdmin ? 'Menu admin' : 'Akun'; ?></span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end site-nav-menu" aria-labelledby="accountMenu">
+                <?php if($isAdmin): ?>
+                  <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>admin/products.php"><i class="fa-solid fa-box"></i>Kelola produk</a></li>
+                  <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>admin/community.php"><i class="fa-solid fa-seedling"></i>Kelola komunitas</a></li>
+                  <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>admin/orders.php"><i class="fa-solid fa-receipt"></i>Verifikasi pesanan</a></li>
+                <?php endif; ?>
+                <?php if($isCustomer): ?>
+                  <?php if($isAdmin): ?><li><hr class="dropdown-divider"></li><?php endif; ?>
+                  <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>account.php"><i class="fa-solid fa-circle-user"></i>Akun pelanggan</a></li>
+                <?php endif; ?>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="<?php echo $BASE_PATH; ?>logout.php"><i class="fa-solid fa-right-from-bracket text-danger"></i>Keluar</a></li>
+              </ul>
+            </li>
           <?php else: ?>
-            <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>customer_login.php">Login</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>customer_register.php">Daftar</a></li>
-          <?php endif; ?>
-          <?php if (!empty($_SESSION['is_admin'])): ?>
-            <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>admin/logout.php">Logout</a></li>
+            <li class="nav-item dropdown">
+              <button class="nav-link dropdown-toggle site-nav-link site-nav-toggle" id="loginMenu" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-user"></i><span>Masuk</span></button>
+              <ul class="dropdown-menu dropdown-menu-end site-nav-menu" aria-labelledby="loginMenu">
+                <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>customer_login.php"><i class="fa-solid fa-user"></i>Login pelanggan</a></li>
+                <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>customer_register.php"><i class="fa-solid fa-user-plus"></i>Daftar pelanggan</a></li>
+                <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>admin/login.php"><i class="fa-solid fa-user-shield"></i>Login admin</a></li>
+              </ul>
+            </li>
           <?php endif; ?>
         </ul>
       </div>
