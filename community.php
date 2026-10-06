@@ -4,7 +4,9 @@ if(session_status() === PHP_SESSION_NONE) session_start();
 $error = null;
 $success = null;
 $selectedEventId = (int)($_GET['event'] ?? 0);
-if($_SERVER['REQUEST_METHOD'] === 'POST'){
+if($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > parseIniSizeBytes(ini_get('post_max_size'))){
+  $error = 'Ukuran upload melewati batas request PHP (post_max_size '.ini_get('post_max_size').'). Naikkan batas PHP lalu mulai ulang server.';
+}elseif($_SERVER['REQUEST_METHOD'] === 'POST'){
   try{
     if(!csrf_verify($_POST['csrf'] ?? '')) throw new RuntimeException('Token keamanan tidak valid. Muat ulang halaman dan coba lagi.');
     if(empty($_SESSION['customer_id'])) throw new RuntimeException('Masuk ke akun pelanggan terlebih dahulu.');
@@ -26,6 +28,7 @@ $auctions = getCommunityAuctions();
 $buyerRanks = getBuyerLeaderboard();
 $sellerRanks = getSellerLeaderboard();
 $events = getSchoolEvents();
+$videoUploadLimit = min(50 * 1024 * 1024, getEffectiveVideoUploadLimit());
 if(!$selectedEventId && $events) $selectedEventId = (int)$events[0]['id'];
 $schoolRanks = $selectedEventId ? getSchoolLeaderboard($selectedEventId) : [];
 $auctionOrders = !empty($_SESSION['customer_id']) ? getCustomerAuctionOrders($_SESSION['customer_id']) : [];
@@ -49,8 +52,8 @@ include __DIR__.'/header.php';
 <section id="diy" class="mb-5">
   <h2>Panduan DIY</h2><p class="text-muted">Resep kreatif dan cara mengubah barang bekas jadi berguna.</p>
   <?php if($resources): ?><div class="row g-3 mb-4"><?php foreach($resources as $resource): ?><div class="col-md-6 col-xl-4"><article class="card h-100 p-3"><span class="badge text-bg-success align-self-start"><?php echo $resource['resource_type'] === 'ebook' ? 'Buku digital' : 'Video panduan'; ?></span><h3 class="h5 mt-3"><?php echo esc($resource['title']); ?></h3><p class="text-muted flex-grow-1"><?php echo nl2br(esc($resource['description'])); ?></p><a class="btn btn-outline-success align-self-start" href="<?php echo esc($resource['resource_url']); ?>" target="_blank" rel="noopener">Buka panduan <i class="fa fa-arrow-up-right-from-square ms-1"></i></a></article></div><?php endforeach; ?></div><?php else: ?><p class="text-muted">Panduan baru akan segera hadir.</p><?php endif; ?>
-  <div class="card p-3"><div class="row g-3 align-items-center"><div class="col-lg-4"><h3 class="h4">Pamerkan kreasimu</h3><p class="text-muted mb-lg-0">Video maksimal 50 MB. Karya yang lolos moderasi mendapat poin hadiah.</p></div><div class="col-lg-8">
-    <?php if(!empty($_SESSION['customer_id'])): ?><form method="post" enctype="multipart/form-data" class="row g-2"><input type="hidden" name="csrf" value="<?php echo esc(csrf_token()); ?>"><input type="hidden" name="action" value="submit_diy"><div class="col-md-6"><label class="form-label">Judul karya</label><input class="form-control" name="title" maxlength="180" required></div><div class="col-md-6"><label class="form-label">Asal sekolah (opsional)</label><input class="form-control" name="school_name" maxlength="180"></div><div class="col-md-8"><label class="form-label">Cerita proses</label><textarea class="form-control" name="description" rows="2"></textarea></div><div class="col-md-4"><label class="form-label">Video (MP4/WebM/MOV)</label><input class="form-control" type="file" name="video" accept="video/mp4,video/webm,video/quicktime" required></div><div class="col-12"><button class="btn btn-success"><i class="fa fa-upload me-1"></i>Kirim karya</button></div></form><?php else: ?><a class="btn btn-success" href="customer_login.php?next=community.php">Masuk untuk mengirim karya</a><?php endif; ?>
+  <div class="card p-3"><div class="row g-3 align-items-center"><div class="col-lg-4"><h3 class="h4">Pamerkan kreasimu</h3><p class="text-muted mb-lg-0">Video maksimal <?php echo esc(formatFileSize($videoUploadLimit)); ?> sesuai batas server saat ini (maksimal fitur 50 MB). Karya yang lolos moderasi mendapat poin hadiah.</p></div><div class="col-lg-8">
+    <?php if(!empty($_SESSION['customer_id'])): ?><form method="post" enctype="multipart/form-data" class="row g-2"><input type="hidden" name="csrf" value="<?php echo esc(csrf_token()); ?>"><input type="hidden" name="action" value="submit_diy"><div class="col-md-6"><label class="form-label">Judul karya</label><input class="form-control" name="title" maxlength="180" required></div><div class="col-md-6"><label class="form-label">Asal sekolah (opsional)</label><input class="form-control" name="school_name" maxlength="180"></div><div class="col-md-8"><label class="form-label">Cerita proses</label><textarea class="form-control" name="description" rows="2"></textarea></div><div class="col-md-4"><label class="form-label">Video (MP4/WebM/MOV)</label><input class="form-control" type="file" name="video" accept="video/mp4,video/webm,video/quicktime" required><div class="form-text">Maks. <?php echo esc(formatFileSize($videoUploadLimit)); ?></div></div><div class="col-12"><button class="btn btn-success"><i class="fa fa-upload me-1"></i>Kirim karya</button></div></form><?php else: ?><a class="btn btn-success" href="customer_login.php?next=community.php">Masuk untuk mengirim karya</a><?php endif; ?>
   </div></div></div>
 </section>
 

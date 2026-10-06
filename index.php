@@ -1,4 +1,20 @@
-<?php include 'header.php'; $sellerFilter = isset($_GET['seller_id']) ? (int)$_GET['seller_id'] : 0; $searchQuery = trim($_GET['q'] ?? ''); $sellers = getSellers(); $products = getProducts($sellerFilter > 0 ? $sellerFilter : null, $searchQuery); ?>
+<?php
+include 'header.php';
+$sellerFilter = isset($_GET['seller_id']) ? (int)$_GET['seller_id'] : 0;
+$searchQuery = trim($_GET['q'] ?? '');
+$sellers = getSellers();
+$products = getProducts($sellerFilter > 0 ? $sellerFilter : null, $searchQuery);
+$now = date('Y-m-d H:i:s');
+$homeEvents = array_slice(array_values(array_filter(getSchoolEvents(false), function($event) use ($now){
+  return !empty($event['is_active']) && $event['ends_at'] >= $now && strtolower(trim($event['name'])) !== 'testing';
+})), 0, 2);
+$homeEbooks = array_slice(array_values(array_filter(getDiyResources(), function($resource){
+  return $resource['resource_type'] === 'ebook';
+})), 0, 2);
+$homeAuctions = array_slice(array_values(array_filter(getCommunityAuctions(), function($auction) use ($now){
+  return $auction['ends_at'] > $now;
+})), 0, 2);
+?>
 
 <!-- Rebelstuff Hero -->
 <section class="mb-5">
@@ -59,6 +75,57 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="home-community mb-5" aria-label="Komunitas Terra Kala">
+  <style>
+    .home-community { padding:1.25rem 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+    .home-community-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1.25rem; }
+    .home-community-column { min-width:0; }
+    .home-community-column + .home-community-column { border-left:1px solid var(--border); padding-left:1.25rem; }
+    .home-community-heading { display:flex; align-items:center; gap:.55rem; margin-bottom:.75rem; }
+    .home-community-heading i { color:var(--accent); }
+    .home-community-entry { padding:.65rem 0; border-top:1px solid rgba(199,217,182,.7); }
+    .home-community-entry:first-of-type { border-top:0; }
+    .home-community-entry-title { display:block; color:var(--text); font-weight:700; line-height:1.35; text-decoration:none; }
+    .home-community-entry-title:hover { color:var(--accent); }
+    .home-community-meta { color:var(--muted); font-size:.8rem; }
+    @media (max-width:767.98px) { .home-community-grid { grid-template-columns:1fr; gap:0; } .home-community-column + .home-community-column { border-left:0; border-top:1px solid var(--border); padding:1rem 0 0; margin-top:1rem; } }
+  </style>
+  <div class="home-community-grid">
+    <section class="home-community-column" aria-labelledby="home-events-title">
+      <h2 class="h5 home-community-heading" id="home-events-title"><i class="fa-solid fa-people-group"></i>Kompetisi sekolah</h2>
+      <?php if($homeEvents): foreach($homeEvents as $event): $eventStarted = $event['starts_at'] <= $now; ?>
+        <article class="home-community-entry">
+          <a class="home-community-entry-title" href="community.php#schools"><?php echo esc($event['name']); ?></a>
+          <div class="home-community-meta"><?php echo $eventStarted ? 'Sedang berlangsung' : 'Segera dimulai'; ?> · Berakhir <?php echo esc(date('d M Y', strtotime($event['ends_at']))); ?></div>
+        </article>
+      <?php endforeach; else: ?><p class="small text-muted mb-2">Belum ada kompetisi aktif.</p><?php endif; ?>
+      <a class="small fw-semibold" href="community.php#schools">Lihat kompetisi <i class="fa fa-arrow-right ms-1"></i></a>
+    </section>
+
+    <section class="home-community-column" aria-labelledby="home-ebooks-title">
+      <h2 class="h5 home-community-heading" id="home-ebooks-title"><i class="fa-solid fa-book-open"></i>Buku DIY</h2>
+      <?php if($homeEbooks): foreach($homeEbooks as $book): ?>
+        <article class="home-community-entry">
+          <a class="home-community-entry-title" href="<?php echo esc($book['resource_url']); ?>" target="_blank" rel="noopener"><?php echo esc($book['title']); ?></a>
+          <div class="home-community-meta"><?php echo esc($book['description']); ?></div>
+        </article>
+      <?php endforeach; else: ?><p class="small text-muted mb-2">Buku digital akan segera hadir.</p><?php endif; ?>
+      <a class="small fw-semibold" href="community.php#diy">Lihat semua panduan <i class="fa fa-arrow-right ms-1"></i></a>
+    </section>
+
+    <section class="home-community-column" aria-labelledby="home-auctions-title">
+      <h2 class="h5 home-community-heading" id="home-auctions-title"><i class="fa-solid fa-gavel"></i>Lelang berlangsung</h2>
+      <?php if($homeAuctions): foreach($homeAuctions as $auction): $auctionStarted = $auction['starts_at'] <= $now; ?>
+        <article class="home-community-entry">
+          <a class="home-community-entry-title" href="community.php#auction"><?php echo esc($auction['title']); ?></a>
+          <div class="home-community-meta"><?php echo $auctionStarted ? 'Sedang berlangsung' : 'Segera dimulai'; ?> · Penawaran <?php echo formatRupiah($auction['current_bid']); ?> · Tutup <?php echo esc(date('d M Y H:i', strtotime($auction['ends_at']))); ?></div>
+        </article>
+      <?php endforeach; else: ?><p class="small text-muted mb-2">Belum ada lelang yang aktif.</p><?php endif; ?>
+      <a class="small fw-semibold" href="community.php#auction">Lihat lelang <i class="fa fa-arrow-right ms-1"></i></a>
+    </section>
   </div>
 </section>
 

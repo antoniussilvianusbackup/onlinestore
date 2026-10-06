@@ -665,7 +665,20 @@ function reviewSchoolSubmission($submissionId, $approved, $score){
 function submitDiyVideo($file, $data, $customerId, $customerName){
   ensureCommunitySchema();
   if(trim($data['title'] ?? '') === '') throw new RuntimeException('Judul karya wajib diisi.');
-  if(empty($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) throw new RuntimeException('Pilih video yang akan diunggah.');
+  $uploadError = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+  if($uploadError !== UPLOAD_ERR_OK){
+    $limitText = formatFileSize(getEffectiveVideoUploadLimit());
+    $messages = [
+      UPLOAD_ERR_INI_SIZE => 'Video melebihi batas PHP upload_max_filesize. Batas efektif server saat ini '.$limitText.'.',
+      UPLOAD_ERR_FORM_SIZE => 'Video melebihi batas ukuran form.',
+      UPLOAD_ERR_PARTIAL => 'Video hanya terunggah sebagian. Coba unggah ulang.',
+      UPLOAD_ERR_NO_FILE => 'Pilih video yang akan diunggah.',
+      UPLOAD_ERR_NO_TMP_DIR => 'Folder sementara upload PHP tidak tersedia.',
+      UPLOAD_ERR_CANT_WRITE => 'Server gagal menulis file video ke penyimpanan.',
+      UPLOAD_ERR_EXTENSION => 'Upload video dihentikan oleh konfigurasi ekstensi PHP.',
+    ];
+    throw new RuntimeException($messages[$uploadError] ?? 'Upload video gagal (kode '.$uploadError.').');
+  }
   if((int)$file['size'] > 50 * 1024 * 1024) throw new RuntimeException('Ukuran video maksimal 50 MB.');
   $finfo = new finfo(FILEINFO_MIME_TYPE);
   $mime = $finfo->file($file['tmp_name']);
@@ -677,6 +690,30 @@ function submitDiyVideo($file, $data, $customerId, $customerName){
   if(!move_uploaded_file($file['tmp_name'], $directory.'/'.$filename)) throw new RuntimeException('Video gagal disimpan.');
   $st = getPDO()->prepare("INSERT INTO diy_submissions (customer_id, customer_name, school_name, title, description, video_path) VALUES (?,?,?,?,?,?)");
   $st->execute([(int)$customerId, $customerName, trim($data['school_name'] ?? ''), trim($data['title'] ?? ''), trim($data['description'] ?? ''), 'uploads/creations/'.$filename]);
+}
+
+function parseIniSizeBytes($value){
+  $value = trim((string)$value);
+  if($value === '' || $value === '-1') return PHP_INT_MAX;
+  $unit = strtolower(substr($value, -1));
+  $number = (float)$value;
+  if($unit === 'g') $number *= 1024 * 1024 * 1024;
+  elseif($unit === 'm') $number *= 1024 * 1024;
+  elseif($unit === 'k') $number *= 1024;
+  return (int)$number;
+}
+
+function getEffectiveVideoUploadLimit(){
+  $uploadLimit = parseIniSizeBytes(ini_get('upload_max_filesize'));
+  $postLimit = parseIniSizeBytes(ini_get('post_max_size'));
+  $requestLimit = $postLimit === PHP_INT_MAX ? $uploadLimit : max(0, $postLimit - 1024 * 1024);
+  return min(50 * 1024 * 1024, $uploadLimit, $requestLimit);
+}
+
+function formatFileSize($bytes){
+  if($bytes >= 1024 * 1024) return rtrim(rtrim(number_format($bytes / (1024 * 1024), 1, '.', ''), '0'), '.').' MB';
+  if($bytes >= 1024) return rtrim(rtrim(number_format($bytes / 1024, 1, '.', ''), '0'), '.').' KB';
+  return (int)$bytes.' byte';
 }
 
 function ensureVoucherRewardsSchema(){
