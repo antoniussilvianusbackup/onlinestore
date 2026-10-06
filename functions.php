@@ -1267,10 +1267,11 @@ function addProduct($data, $file){
   ensureProductsSchema();
   ensureSellersSchema();
   $pdo = getPDO();
-  $imagePath = null;
+  $imagePath = resolveExistingProductImage($data['existing_image_path'] ?? '');
   if(isset($file['image']) && $file['image']['error']===UPLOAD_ERR_OK){
     $imagePath = handleUpload($file['image']);
   }
+  if(!$imagePath) throw new RuntimeException('Foto produk wajib diunggah atau dipilih dari foto lama.');
   $sizes = isset($data['sizes']) ? implode(',', $data['sizes']) : 'All Size,S,M,L,XL';
   $sellerIdRaw = $data['seller_id'] ?? '';
   $sellerId = ($sellerIdRaw !== '' && $sellerIdRaw !== null) ? (int)$sellerIdRaw : null;
@@ -1284,6 +1285,8 @@ function updateProduct($id, $data, $file){
   $product = getProduct($id);
   if(!$product){ throw new RuntimeException('Produk tidak ditemukan'); }
   $imagePath = $product['image_path'];
+  $selectedImage = trim($data['existing_image_path'] ?? '');
+  if($selectedImage !== '') $imagePath = resolveExistingProductImage($selectedImage);
   if(isset($file['image']) && $file['image']['error']===UPLOAD_ERR_OK){
     $imagePath = handleUpload($file['image']);
   }
@@ -1292,6 +1295,26 @@ function updateProduct($id, $data, $file){
   $sellerId = ($sellerIdRaw !== '' && $sellerIdRaw !== null) ? (int)$sellerIdRaw : null;
   $st = $pdo->prepare("UPDATE products SET name=?, description=?, price=?, image_path=?, sizes=?, seller_id=?, is_best_seller=? WHERE id=?");
   $st->execute([$data['name'], $data['description'], $data['price'], $imagePath, $sizes, $sellerId, !empty($data['is_best_seller'])?1:0, $id]);
+}
+function getUploadedProductImages(){
+  $paths = [];
+  foreach(glob(__DIR__.'/uploads/*') ?: [] as $file){
+    if(!is_file($file) || !preg_match('/\.(jpe?g|png|webp)$/i', $file)) continue;
+    $paths[] = 'uploads/'.basename($file);
+  }
+  rsort($paths, SORT_NATURAL);
+  return $paths;
+}
+function resolveExistingProductImage($path){
+  $path = trim((string)$path);
+  if($path === '') return null;
+  $filename = basename($path);
+  $allowed = getUploadedProductImages();
+  $relativePath = 'uploads/'.$filename;
+  if(!in_array($relativePath, $allowed, true) || !is_file(__DIR__.'/'.$relativePath)){
+    throw new RuntimeException('Foto lama tidak ditemukan. Pilih ulang atau unggah foto baru.');
+  }
+  return $relativePath;
 }
 function deleteProduct($id){
   $pdo = getPDO();

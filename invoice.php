@@ -60,7 +60,7 @@ body{background:linear-gradient(180deg,#f9fcf3 0%,var(--bg) 100%); color:var(--t
       <img src="logo1.png" alt="Logo Terra Kala" onerror="this.onerror=null;this.src='favicon.svg';">
       <div>
         <div class="fw-bold brand-title">Terra Kala</div>
-        <div class="text-muted small">Eco Recycled Store<br>Kp. Pitara Rangkapanjaya, Depok<br>Telp/WA: 087874872257</div>
+        <div class="text-muted small">Eco Recycled Store<br>Kp. Pitara Rangkapanjaya, Depok<br>Telp/WA: 081414002303</div>
       </div>
     </div>
     <div class="text-end">

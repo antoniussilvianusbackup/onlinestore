@@ -149,8 +149,8 @@
           <div class="divider"></div>
           <p class="mb-1"><i class="fa-solid fa-location-dot me-2 text-primary"></i>Komplek Cibubur Indah V Blok S2/1</p>
           <p class="mb-1"><i class="fa-solid fa-clock me-2 text-primary"></i>Jam Operasional: <strong>Senin - Sabtu, 10:00 - 21:00 WIB</strong></p>
-          <p class="mb-1"><i class="fa-solid fa-phone me-2 text-primary"></i>No. Telepon: <strong><a href="tel:087874872257" class="text-decoration-primary">087874872257</a></strong></p>
-          <a class="btn btn-sm btn-outline-success mt-2" href="https://wa.me/6287874872257" target="_blank">
+          <p class="mb-1"><i class="fa-solid fa-phone me-2 text-primary"></i>No. Telepon: <strong><a href="tel:081414002303" class="text-decoration-primary">081414002303</a></strong></p>
+          <a class="btn btn-sm btn-outline-success mt-2" href="https://wa.me/6281414002303" target="_blank">
             <i class="fa-brands fa-whatsapp me-1"></i> Chat WhatsApp
           </a>
         </div>
@@ -245,6 +245,11 @@
 
 <!-- Pilih Model & Ukuran -->
 <section class="mt-4" id="shop">
+  <style>
+    .catalog-product-image { height:220px; background:#e8eee2; display:grid; place-items:center; color:#65735d; }
+    .catalog-product-image img { width:100%; height:100%; object-fit:cover; }
+    .catalog-product-image-fallback { text-align:center; padding:1rem; }
+  </style>
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
       <h3 class="mb-1">Pilih Produk Daur Ulang</h3>
@@ -286,9 +291,14 @@
   <?php else: foreach($products as $p): ?>
     <div class="col-12 col-sm-6 col-lg-4 product-card" data-search="<?php echo esc(strtolower((string)($p['name'] ?? '') . ' ' . (string)($p['description'] ?? '') . ' ' . (string)($p['seller_name'] ?? ''))); ?>">
       <div class="card h-100">
-        <?php if($p['image_path']): ?>
-          <img src="<?php echo esc($p['image_path']); ?>" class="card-img-top" alt="<?php echo esc($p['name']); ?>" style="height:220px; object-fit:cover;">
-        <?php endif; ?>
+        <div class="catalog-product-image">
+          <?php if(!empty($p['image_path'])): ?>
+            <img src="<?php echo esc($p['image_path']); ?>" alt="<?php echo esc($p['name']); ?>" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+            <div class="catalog-product-image-fallback" hidden><i class="fa fa-image fs-3 d-block mb-2"></i><span>Foto produk tidak ditemukan</span></div>
+          <?php else: ?>
+            <div class="catalog-product-image-fallback"><i class="fa fa-image fs-3 d-block mb-2"></i><span>Foto produk belum tersedia</span></div>
+          <?php endif; ?>
+        </div>
         <div class="card-body d-flex flex-column">
           <?php $isNew = !empty($p['created_at']) && (strtotime($p['created_at']) >= strtotime('-14 days')); ?>
           <div class="mb-1 d-flex gap-2 flex-wrap">

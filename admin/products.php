@@ -24,9 +24,25 @@ try{
 }
 ?>
 <?php include '../header.php'; ?>
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h3>Produk (Admin)</h3>
-  <div class="d-flex gap-2">
+<style>
+  .product-admin-toolbar { display:flex; flex-wrap:wrap; gap:.65rem; }
+  .product-admin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr)); gap:1rem; }
+  .product-admin-card { overflow:hidden; height:100%; }
+  .product-admin-image { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; background:#e8eee2; }
+  .product-admin-placeholder { display:grid; place-items:center; aspect-ratio:4/3; background:#e8eee2; color:#5f6f5c; font-size:2rem; }
+  .product-admin-meta { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .product-admin-actions { display:flex; flex-wrap:wrap; gap:.5rem; }
+  .existing-image-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:.65rem; }
+  .existing-image-option { position:relative; cursor:pointer; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:#fff; }
+  .existing-image-option:has(input:checked) { outline:2px solid var(--accent); outline-offset:1px; }
+  .existing-image-option img { display:block; width:100%; aspect-ratio:1; object-fit:cover; background:#e8eee2; }
+  .existing-image-option .form-check-input { position:absolute; z-index:1; top:.4rem; left:.4rem; margin:0; }
+  .existing-image-option span { display:block; overflow:hidden; padding:.35rem; font-size:.68rem; text-overflow:ellipsis; white-space:nowrap; }
+  @media (max-width:575.98px) { .product-admin-toolbar > a { flex:1 1 calc(50% - .65rem); } .product-admin-toolbar > a:last-child { flex-basis:100%; } }
+</style>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div><h1 class="mb-1">Produk</h1><div class="text-muted">Kelola katalog dan informasi produk.</div></div>
+  <div class="product-admin-toolbar">
     <a href="sellers.php" class="btn btn-outline-secondary"><i class="fa fa-store"></i> Kelola Seller</a>
     <a href="voucher_rewards.php" class="btn btn-outline-success"><i class="fa fa-gift"></i> Kelola Reward Voucher</a>
     <a href="community.php" class="btn btn-outline-success"><i class="fa fa-seedling"></i> Kelola Komunitas</a>
@@ -39,6 +55,7 @@ try{
 
 <?php
 $sellers = getSellers();
+$uploadedImages = getUploadedProductImages();
 if(($action==='new') || ($action==='edit' && isset($_GET['id']))):
   $prod = ['name'=>'','description'=>'','price'=>'','sizes'=>'All Size,S,M,L,XL','image_path'=>'','seller_id'=>null,'is_best_seller'=>0];
   if($action==='edit'){ $prod = getProduct((int)$_GET['id']); }
@@ -91,9 +108,22 @@ if(($action==='new') || ($action==='edit' && isset($_GET['id']))):
       </div>
       <div class="col-md-6">
         <label class="form-label">Foto Produk (JPG/PNG/WebP, max 2MB)</label>
-        <input type="file" class="form-control" name="image" <?php echo $action==='new'?'required':''; ?>>
-        <?php if($prod['image_path']): ?><img src="../<?php echo esc($prod['image_path']); ?>" class="mt-2 rounded" width="160"><?php endif; ?>
+        <input type="file" class="form-control" name="image" <?php echo $action==='new' && !$uploadedImages?'required':''; ?>>
+        <div class="form-text">Foto baru akan menggantikan foto pilihan di bawah.</div>
       </div>
+      <?php if($uploadedImages): ?><div class="col-md-6">
+        <label class="form-label">Pilih foto lama dari uploads</label>
+        <div class="existing-image-grid">
+          <?php foreach($uploadedImages as $imagePath): ?><label class="existing-image-option">
+            <input class="form-check-input" type="radio" name="existing_image_path" value="<?php echo esc($imagePath); ?>" <?php echo !empty($prod['image_path']) && $prod['image_path']===$imagePath?'checked':''; ?>>
+            <img src="../<?php echo esc($imagePath); ?>" alt="Foto <?php echo esc(basename($imagePath)); ?>" loading="lazy" onerror="this.hidden=true">
+            <span title="<?php echo esc(basename($imagePath)); ?>"><?php echo esc(basename($imagePath)); ?></span>
+          </label><?php endforeach; ?>
+        </div>
+        <div class="form-text">Foto baru di kolom sebelah akan menggantikan pilihan ini.</div>
+        <?php if(!empty($prod['image_path'])): ?><img src="../<?php echo esc($prod['image_path']); ?>" alt="Foto <?php echo esc($prod['name']); ?>" class="mt-2 rounded" style="width:140px;height:110px;object-fit:cover" onerror="this.hidden=true"><?php endif; ?>
+      </div>
+      <?php endif; ?>
       <div class="col-12">
         <button class="btn btn-primary"><?php echo $action==='new'?'Simpan':'Update'; ?></button>
         <a href="products.php" class="btn btn-primary">Batal</a>
@@ -103,26 +133,49 @@ if(($action==='new') || ($action==='edit' && isset($_GET['id']))):
 </div>
 <?php else:
   $rows = getProducts(); ?>
-  <div class="row row-cols-1 row-cols-lg-2 g-4 admin-products-row">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <div class="small text-muted"><strong><?php echo count($rows); ?></strong> produk terdaftar</div>
+    <?php if($rows): ?><div class="input-group" style="max-width:360px"><span class="input-group-text"><i class="fa fa-search"></i></span><input id="admin-product-search" type="search" class="form-control" placeholder="Cari nama atau seller" aria-label="Cari produk"></div><?php endif; ?>
+  </div>
+  <?php if(!$rows): ?><div class="border-top border-bottom py-5 text-center"><i class="fa fa-box-open fs-2 text-muted mb-3"></i><h2 class="h5">Belum ada produk</h2><p class="text-muted">Tambahkan produk pertama ke katalog.</p><a href="products.php?action=new" class="btn btn-primary"><i class="fa fa-plus me-1"></i>Produk Baru</a></div>
+  <?php else: ?><div class="product-admin-grid" id="admin-product-grid">
     <?php foreach($rows as $p): ?>
-      <div class="col-12 col-md-6">
-        <div class="card admin-card h-100 p-3 d-flex flex-row align-items-center">
-          <?php if($p['image_path']): ?><div class="thumb-box"><img class="product-thumb" src="../<?php echo esc($p['image_path']); ?>" width="90" class="rounded me-3"><?php endif; ?>
-          <div class="flex-grow-1">
-            <div class="fw-bold"><?php echo esc($p['name']); ?> <span class="text-muted">— <?php echo formatRupiah($p['price']); ?></span></div>
-            <div class="small text-muted">Seller: <?php echo esc(!empty($p['seller_name']) ? $p['seller_name'] : '-'); ?></div>
-            <div class="small text-muted mb-2">Ukuran: <?php echo esc($p['sizes']); ?></div>
-            <div>
-              <a class="btn btn-sm btn-outline-primary" href="products.php?action=edit&id=<?php echo $p['id']; ?>"><i class="fa fa-pen"></i> Edit</a>
-              <a class="btn btn-sm btn-outline-danger" href="products.php?action=delete&id=<?php echo $p['id']; ?>" onclick="return confirm('Hapus produk ini?')"><i class="fa fa-trash"></i> Hapus</a>
-            </div>
+      <article class="card product-admin-card" data-product-search="<?php echo esc(strtolower($p['name'].' '.($p['seller_name'] ?? ''))); ?>">
+        <?php if(!empty($p['image_path'])): ?><img class="product-admin-image" src="../<?php echo esc($p['image_path']); ?>" alt="<?php echo esc($p['name']); ?>" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+        <?php else: ?><div class="product-admin-placeholder" aria-label="Tidak ada foto produk"><i class="fa fa-image"></i></div><?php endif; ?>
+        <?php if(!empty($p['image_path'])): ?><div class="product-admin-placeholder" aria-label="Foto produk tidak ditemukan" hidden><i class="fa fa-image"></i></div><?php endif; ?>
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex justify-content-between align-items-start gap-3 mb-2"><h2 class="h5 mb-0"><?php echo esc($p['name']); ?></h2><strong class="text-nowrap"><?php echo formatRupiah($p['price']); ?></strong></div>
+          <div class="small text-muted mb-2"><i class="fa fa-store me-1"></i><?php echo esc(!empty($p['seller_name']) ? $p['seller_name'] : 'Dikelola admin'); ?></div>
+          <p class="small text-muted flex-grow-1 mb-3"><?php echo esc($p['description'] ?: 'Belum ada deskripsi.'); ?></p>
+          <div class="product-admin-meta small text-muted mb-3"><span class="badge text-bg-light border">Ukuran: <?php echo esc($p['sizes'] ?: 'All Size'); ?></span><?php if(!empty($p['is_best_seller'])): ?><span class="badge text-bg-warning">Best Seller</span><?php endif; ?></div>
+          <div class="product-admin-actions mt-auto">
+            <a class="btn btn-sm btn-outline-primary" href="products.php?action=edit&id=<?php echo (int)$p['id']; ?>"><i class="fa fa-pen me-1"></i>Edit</a>
+            <a class="btn btn-sm btn-outline-danger" href="products.php?action=delete&id=<?php echo (int)$p['id']; ?>" onclick="return confirm('Hapus produk ini?')"><i class="fa fa-trash me-1"></i>Hapus</a>
           </div>
         </div>
-      
-      </div>
-      </div>
+      </article>
     <?php endforeach; ?>
-  </div>
+  </div><p id="admin-product-no-match" class="text-muted text-center py-4 d-none">Tidak ada produk yang cocok.</p><?php endif; ?>
 <?php endif; ?>
+
+<script>
+(() => {
+  const search = document.getElementById('admin-product-search');
+  const cards = Array.from(document.querySelectorAll('[data-product-search]'));
+  const noMatch = document.getElementById('admin-product-no-match');
+  if (!search) return;
+  search.addEventListener('input', () => {
+    const query = search.value.trim().toLowerCase();
+    let visible = 0;
+    cards.forEach((card) => {
+      const matches = (card.dataset.productSearch || '').includes(query);
+      card.hidden = !matches;
+      if (matches) visible += 1;
+    });
+    noMatch.classList.toggle('d-none', visible > 0);
+  });
+})();
+</script>
 
 <?php include '../footer.php'; ?>
