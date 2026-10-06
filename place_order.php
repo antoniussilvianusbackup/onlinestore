@@ -1,13 +1,29 @@
 <?php
-include 'header.php';
+if(session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__.'/functions.php';
 if(empty($_SESSION['customer_id'])){
   header('Location: customer_login.php?next=checkout.php'); exit;
 }
+if($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_verify($_POST['csrf'] ?? '')){
+  http_response_code(400);
+  exit('Permintaan tidak valid. Silakan kembali ke checkout dan coba lagi.');
+}
+$submittedOrderToken = $_POST['order_token'] ?? '';
+if(empty($_SESSION['_order_submission_token']) || $submittedOrderToken === '' || !hash_equals($_SESSION['_order_submission_token'], $submittedOrderToken)){
+  http_response_code(409);
+  exit('Pesanan ini sudah diproses atau form checkout sudah kedaluwarsa. Buka checkout kembali untuk membuat pesanan baru.');
+}
+$customer = getCustomerById((int)$_SESSION['customer_id']);
+if(!$customer){
+  header('Location: customer_logout.php'); exit;
+}
 $cart = $_SESSION['cart'] ?? [];
 if(!$cart){
+  include 'header.php';
   echo '<div class="alert alert-info">Keranjang kosong. <a href="index.php">Belanja dulu</a>.</div>';
   include 'footer.php'; exit;
 }
+include 'header.php';
 
 $required = ['full_name','phone','address','city','province','postal_code'];
 $missing = [];
@@ -43,11 +59,7 @@ $customerData = [
   'postal_code' => $_POST['postal_code'],
 ];
 $customerId = (int)($_SESSION['customer_id'] ?? 0);
-$customerInfo = getCustomerById($customerId);
-if(!$customerInfo){
-  http_response_code(403);
-  exit('Akun pelanggan tidak ditemukan. Silakan masuk kembali.');
-}
+$customerInfo = $customer;
 $customerInfo = updateCustomerById($customerId, $customerData);
 $_SESSION['customer_name'] = $customerInfo['name'];
 $_SESSION['customer_phone'] = $customerInfo['phone'];
@@ -107,6 +119,7 @@ createOrder([
   'points_earned' => $pointsEarned,
   'voucher_awarded' => $customerInfo['voucher_awarded'] ?? 0,
 ], array_values($cart));
+unset($_SESSION['_order_submission_token']);
 
 // ===== WhatsApp message =====
 require_once __DIR__.'/config.php';

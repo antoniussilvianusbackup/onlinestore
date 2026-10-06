@@ -29,6 +29,14 @@ $events = getSchoolEvents();
 if(!$selectedEventId && $events) $selectedEventId = (int)$events[0]['id'];
 $schoolRanks = $selectedEventId ? getSchoolLeaderboard($selectedEventId) : [];
 $auctionOrders = !empty($_SESSION['customer_id']) ? getCustomerAuctionOrders($_SESSION['customer_id']) : [];
+$auctionPaymentLinks = [];
+$adminWhatsApp = defined('WHATSAPP_PHONE') ? WHATSAPP_PHONE : '6287874872257';
+foreach($auctionOrders as $auctionOrder){
+  if($auctionOrder['payment_status'] === 'pending'){
+    $message = 'Halo Terra Kala, saya pemenang lelang '.$auctionOrder['auction_title'].'. Nomor order '.$auctionOrder['order_no'].', total '.$auctionOrder['total'].'. Mohon instruksi pembayaran.';
+    $auctionPaymentLinks[$auctionOrder['order_no']] = 'https://api.whatsapp.com/send/?phone='.$adminWhatsApp.'&text='.rawurlencode($message).'&type=phone_number&app_absent=0';
+  }
+}
 include __DIR__.'/header.php';
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
@@ -53,7 +61,7 @@ include __DIR__.'/header.php';
   </div></article></div><?php endforeach; ?></div><?php else: ?><div class="border-top border-bottom py-4 text-muted">Belum ada lelang yang dijadwalkan.</div><?php endif; ?>
 </section>
 
-<?php if($auctionOrders): ?><section class="mb-5"><h2 class="h3">Lelang yang kamu menangkan</h2><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Barang</th><th>Nomor order</th><th class="text-end">Tagihan</th><th>Status</th></tr></thead><tbody><?php foreach($auctionOrders as $auctionOrder): ?><tr><td><?php echo esc($auctionOrder['auction_title']); ?></td><td><?php echo esc($auctionOrder['order_no']); ?></td><td class="text-end"><?php echo formatRupiah($auctionOrder['total']); ?></td><td><?php echo esc($auctionOrder['payment_status']); ?></td></tr><?php endforeach; ?></tbody></table></div><p class="small text-muted">Order pemenang akan diverifikasi admin setelah pembayaran dikirim melalui konfirmasi WhatsApp.</p></section><?php endif; ?>
+<?php if($auctionOrders): ?><section class="mb-5"><h2 class="h3">Lelang yang kamu menangkan</h2><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Barang</th><th>Nomor order</th><th class="text-end">Tagihan</th><th>Status</th><th>Aksi</th></tr></thead><tbody><?php foreach($auctionOrders as $auctionOrder): ?><tr><td><?php echo esc($auctionOrder['auction_title']); ?></td><td><?php echo esc($auctionOrder['order_no']); ?></td><td class="text-end"><?php echo formatRupiah($auctionOrder['total']); ?></td><td><?php echo esc($auctionOrder['payment_status']); ?></td><td><?php if($auctionOrder['payment_status']==='pending'): ?><a class="btn btn-sm btn-success" href="<?php echo esc($auctionPaymentLinks[$auctionOrder['order_no']]); ?>" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp me-1"></i>Instruksi pembayaran</a><?php endif; ?></td></tr><?php endforeach; ?></tbody></table></div><p class="small text-muted">Admin memverifikasi pembayaran secara manual. Poin pembeli diberikan setelah status order lunas.</p></section><?php endif; ?>
 
 <section id="ranking" class="mb-5"><h2>Papan peringkat</h2><div class="row g-4">
   <div class="col-lg-6"><h3 class="h5">Pembeli aktif</h3><p class="small text-muted">Poin transaksi terakumulasi; 5 poin dapat ditukar menjadi voucher.</p><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>#</th><th>Pelanggan</th><th class="text-end">Transaksi</th><th class="text-end">Belanja</th><th class="text-end">Poin</th></tr></thead><tbody><?php foreach($buyerRanks as $i=>$buyer): ?><tr><td><?php echo $i+1; ?></td><td><?php echo esc($buyer['name']); ?></td><td class="text-end"><?php echo (int)$buyer['order_count']; ?></td><td class="text-end"><?php echo formatRupiah($buyer['spend_total']); ?></td><td class="text-end fw-bold"><?php echo (int)$buyer['points_total']; ?></td></tr><?php endforeach; ?><?php if(!$buyerRanks): ?><tr><td colspan="5" class="text-muted">Belum ada transaksi.</td></tr><?php endif; ?></tbody></table></div></div>

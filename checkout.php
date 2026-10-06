@@ -21,6 +21,11 @@ $customerProvince = $_SESSION['customer_province'] ?? '';
 $customerPostal = $_SESSION['customer_postal_code'] ?? '';
 $customerPoints = $_SESSION['customer_points_balance'] ?? 0;
 $customerVouchers = $_SESSION['customer_voucher_count'] ?? 0;
+$orderSubmissionToken = $_SESSION['_order_submission_token'] ?? '';
+if($orderSubmissionToken === ''){
+  $orderSubmissionToken = bin2hex(random_bytes(24));
+  $_SESSION['_order_submission_token'] = $orderSubmissionToken;
+}
 $serviceFee = calculateServiceFee($subtotal);
 $rewardOptions = getVoucherRewards();
 $redeemMessage = null;
@@ -114,6 +119,8 @@ include 'header.php';
     <div class="card p-3">
       <h4 class="mb-2">Alamat Pengiriman</h4>
       <form method="post" action="place_order.php" novalidate>
+        <input type="hidden" name="csrf" value="<?php echo esc(csrf_token()); ?>">
+        <input type="hidden" name="order_token" value="<?php echo esc($orderSubmissionToken); ?>">
         <div class="mb-2">
           <label class="form-label">Nama Lengkap</label>
           <input type="text" class="form-control" name="full_name" required value="<?php echo esc($customerName); ?>">

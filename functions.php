@@ -451,6 +451,12 @@ function settleSellerQuarter($periodStart){
   $periodEnd = date('Y-m-d', strtotime($periodStart.' +3 months'));
   $pdo->beginTransaction();
   try{
+    $pendingOrdersSt = $pdo->prepare("SELECT o.id FROM orders o
+      JOIN order_items oi ON oi.order_id=o.id
+      WHERE o.payment_status='pending' AND o.created_at>=? AND o.created_at<? AND oi.seller_id IS NOT NULL
+      LIMIT 1 FOR UPDATE");
+    $pendingOrdersSt->execute([$periodStart, $periodEnd]);
+    if($pendingOrdersSt->fetch()) throw new RuntimeException('Selesaikan atau batalkan semua pesanan seller yang masih pending pada triwulan ini sebelum settlement.');
     $period = $pdo->prepare("INSERT IGNORE INTO seller_bonus_periods (quarter_start) VALUES (?)");
     $period->execute([$periodStart]);
     if($period->rowCount() === 0){ $pdo->commit(); return false; }
@@ -500,11 +506,19 @@ function addSchoolEvent($data){
 function submitSchoolMission($data, $customerId, $customerName){
   ensureCommunitySchema();
   if(trim($data['school_name'] ?? '') === '' || trim($data['team_name'] ?? '') === '' || trim($data['mission_description'] ?? '') === '') throw new RuntimeException('Sekolah, tim, dan deskripsi misi wajib diisi.');
-  $eventSt = getPDO()->prepare("SELECT id FROM school_events WHERE id=? AND is_active=1 AND starts_at<=NOW() AND ends_at>NOW()");
-  $eventSt->execute([(int)($data['event_id'] ?? 0)]);
-  if(!$eventSt->fetchColumn()) throw new RuntimeException('Event tidak sedang berlangsung.');
-  $st = getPDO()->prepare("INSERT INTO school_submissions (event_id, customer_id, customer_name, school_name, team_name, mission_description) VALUES (?,?,?,?,?,?)");
-  $st->execute([(int)$data['event_id'], (int)$customerId, $customerName, trim($data['school_name'] ?? ''), trim($data['team_name'] ?? ''), trim($data['mission_description'] ?? '')]);
+  $pdo = getPDO();
+  $pdo->beginTransaction();
+  try{
+    $eventSt = $pdo->prepare("SELECT id FROM school_events WHERE id=? AND is_active=1 AND is_finalized=0 AND starts_at<=NOW() AND ends_at>NOW() FOR UPDATE");
+    $eventSt->execute([(int)($data['event_id'] ?? 0)]);
+    if(!$eventSt->fetchColumn()) throw new RuntimeException('Event tidak sedang berlangsung.');
+    $st = $pdo->prepare("INSERT INTO school_submissions (event_id, customer_id, customer_name, school_name, team_name, mission_description) VALUES (?,?,?,?,?,?)");
+    $st->execute([(int)$data['event_id'], (int)$customerId, $customerName, trim($data['school_name'] ?? ''), trim($data['team_name'] ?? ''), trim($data['mission_description'] ?? '')]);
+    $pdo->commit();
+  }catch(Throwable $e){
+    if($pdo->inTransaction()) $pdo->rollBack();
+    throw $e;
+  }
 }
 
 function getSchoolLeaderboard($eventId){
@@ -558,13 +572,21 @@ function markSchoolAwardDelivered($awardId){
 
 function saveSchoolScore($eventId, $schoolName, $teamName, $score){
   ensureCommunitySchema();
-  $eventSt = getPDO()->prepare("SELECT is_finalized FROM school_events WHERE id=?");
-  $eventSt->execute([(int)$eventId]);
-  $isFinalized = $eventSt->fetchColumn();
-  if($isFinalized === false) throw new RuntimeException('Event sekolah tidak ditemukan.');
-  if((int)$isFinalized === 1) throw new RuntimeException('Skor tidak dapat diubah setelah podium dikunci.');
-  $st = getPDO()->prepare("INSERT INTO school_scores (event_id, school_name, team_name, score) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE score=VALUES(score)");
-  $st->execute([(int)$eventId, trim($schoolName), trim($teamName), max(0, (int)$score)]);
+  $pdo = getPDO();
+  $pdo->beginTransaction();
+  try{
+    $eventSt = $pdo->prepare("SELECT is_finalized FROM school_events WHERE id=? FOR UPDATE");
+    $eventSt->execute([(int)$eventId]);
+    $isFinalized = $eventSt->fetchColumn();
+    if($isFinalized === false) throw new RuntimeException('Event sekolah tidak ditemukan.');
+    if((int)$isFinalized === 1) throw new RuntimeException('Skor tidak dapat diubah setelah podium dikunci.');
+    $st = $pdo->prepare("INSERT INTO school_scores (event_id, school_name, team_name, score) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE score=VALUES(score)");
+    $st->execute([(int)$eventId, trim($schoolName), trim($teamName), max(0, (int)$score)]);
+    $pdo->commit();
+  }catch(Throwable $e){
+    if($pdo->inTransaction()) $pdo->rollBack();
+    throw $e;
+  }
 }
 
 function incrementSchoolScore($eventId, $schoolName, $teamName, $score){
