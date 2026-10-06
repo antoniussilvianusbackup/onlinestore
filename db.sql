@@ -155,3 +155,34 @@ CREATE TABLE IF NOT EXISTS seller_bonus_awards (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_seller_quarter_bonus (seller_id, quarter_start)
 ) ENGINE=InnoDB;
+
+INSERT INTO school_events (name, description, starts_at, ends_at, top_prize, is_active)
+SELECT 'Sekolah Hijau: Misi Upcycle 2026',
+  'Kompetisi tim pelajar selama sekitar 2,5 bulan. Selesaikan misi: (1) ubah barang bekas menjadi benda berguna, (2) dokumentasikan bahan dan proses, dan (3) jelaskan cara tim mengurangi sampah. Kirim satu laporan untuk tiap misi; admin akan memeriksa dan memberi skor. Tiga tim dengan skor tertinggi masuk podium.',
+  '2026-11-01 00:00:00', '2027-01-15 23:59:00',
+  'Hadiah eksklusif Terra Kala untuk tiga tim terbaik (detail hadiah dikonfirmasi penyelenggara)', 1
+WHERE NOT EXISTS (SELECT 1 FROM school_events WHERE name='Sekolah Hijau: Misi Upcycle 2026');
+
+INSERT INTO auctions (title, description, image_url, starts_at, ends_at, starting_bid, min_increment, is_active)
+SELECT 'DEMO LELANG: Tote Bag Patchwork Denim',
+  'Listing demonstrasi untuk mencoba alur penawaran. Ini belum merupakan konfirmasi stok atau barang resmi. Sebelum lelang sungguhan, admin perlu mengganti detail, foto, jadwal, dan memastikan barang tersedia. Penawaran tertinggi setelah waktu berakhir akan dibuatkan order menunggu pembayaran.',
+  NULL, '2026-10-07 09:00:00', '2026-10-15 20:00:00', 75000, 5000, 1
+WHERE NOT EXISTS (SELECT 1 FROM auctions WHERE title='DEMO LELANG: Tote Bag Patchwork Denim');
+
+INSERT INTO diy_resources (title, description, resource_type, resource_url, is_active)
+SELECT 'Video DIY: Pot tanaman dari botol plastik',
+  'Tautan pencarian video untuk melihat beberapa cara membuat pot dari botol bekas. Periksa instruksi dan keselamatan alat sebelum mulai.',
+  'video', 'https://www.youtube.com/results?search_query=DIY+pot+tanaman+dari+botol+plastik', 1
+WHERE NOT EXISTS (SELECT 1 FROM diy_resources WHERE title='Video DIY: Pot tanaman dari botol plastik');
+
+INSERT INTO diy_resources (title, description, resource_type, resource_url, is_active)
+SELECT 'Video DIY: Tas tanpa jahit dari kaus bekas',
+  'Tautan pencarian video tentang mengubah kaus bekas menjadi tas sederhana tanpa mesin jahit.',
+  'video', 'https://www.youtube.com/results?search_query=tas+tanpa+jahit+dari+kaus+bekas+DIY', 1
+WHERE NOT EXISTS (SELECT 1 FROM diy_resources WHERE title='Video DIY: Tas tanpa jahit dari kaus bekas');
+
+INSERT INTO diy_resources (title, description, resource_type, resource_url, is_active)
+SELECT 'Buku Saku DIY Upcycle: 3 proyek sederhana',
+  'Buku digital lokal berisi panduan pot tanaman botol plastik, tas tanpa jahit dari kaus bekas, dan organizer meja dari kardus, termasuk daftar bahan dan catatan keamanan.',
+  'ebook', 'diy-ebook.html', 1
+WHERE NOT EXISTS (SELECT 1 FROM diy_resources WHERE title='Buku Saku DIY Upcycle: 3 proyek sederhana');
