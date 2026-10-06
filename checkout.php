@@ -21,6 +21,7 @@ $customerProvince = $_SESSION['customer_province'] ?? '';
 $customerPostal = $_SESSION['customer_postal_code'] ?? '';
 $customerPoints = $_SESSION['customer_points_balance'] ?? 0;
 $customerVouchers = $_SESSION['customer_voucher_count'] ?? 0;
+$serviceFee = calculateServiceFee($subtotal);
 $rewardOptions = getVoucherRewards();
 $redeemMessage = null;
 $error = null;
@@ -98,6 +99,10 @@ include 'header.php';
               <th colspan="5" class="text-end">Subtotal</th>
               <th class="text-end"><?php echo formatRupiah($subtotal); ?></th>
             </tr>
+            <tr>
+              <th colspan="5" class="text-end">Biaya layanan (5%)</th>
+              <th class="text-end"><?php echo formatRupiah($serviceFee); ?></th>
+            </tr>
           </tfoot>
         </table>
       </div>
@@ -161,9 +166,10 @@ include 'header.php';
 
         <div class="border-top mt-2 pt-2">
           <div class="d-flex justify-content-between"><span>Subtotal</span><strong id="subtotal_text"><?php echo formatRupiah($subtotal); ?></strong></div>
+          <div class="d-flex justify-content-between"><span>Biaya layanan (5%)</span><strong id="service_fee_text"><?php echo formatRupiah($serviceFee); ?></strong></div>
           <div class="d-flex justify-content-between"><span>Ongkir</span><strong id="shipping_text">Rp 0</strong></div>
           <hr>
-          <div class="d-flex justify-content-between fs-5"><span>Total</span><strong id="total_text"><?php echo formatRupiah($subtotal); ?></strong></div>
+          <div class="d-flex justify-content-between fs-5"><span>Total</span><strong id="total_text"><?php echo formatRupiah($subtotal + $serviceFee); ?></strong></div>
           <div class="mt-2 d-flex justify-content-end">
             <button class="btn btn-success btn-sm">Buat Pesanan</button>
           </div>
@@ -211,6 +217,7 @@ include 'header.php';
 <script>
 (function(){
   const subtotal = <?php echo (int)$subtotal; ?>;
+  const serviceFee = <?php echo (int)$serviceFee; ?>;
   const courierEl = document.getElementById('courier');
   const serviceEl = document.getElementById('service');
   const shipHidden = document.getElementById('shipping_cost');
@@ -242,7 +249,7 @@ include 'header.php';
     const ship = calcShipping();
     shipHidden.value = ship;
     shipText.textContent = formatRupiah(ship);
-    totalText.textContent = formatRupiah(subtotal + ship);
+    totalText.textContent = formatRupiah(subtotal + serviceFee + ship);
   }
   courierEl.addEventListener('change', ()=>{ fillServices(); updateTotals(); });
   serviceEl.addEventListener('change', updateTotals);

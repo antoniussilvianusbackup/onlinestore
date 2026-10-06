@@ -29,10 +29,11 @@ $courier = $_POST['courier'] ?? 'JNE';
 $service = $_POST['service'] ?? 'REG';
 $province = $_POST['province'] ?? null;
 $shipping = calcShipping($courier, $service, $province);
-$total = $subtotal + $shipping;
+$serviceFee = calculateServiceFee($subtotal);
+$total = $subtotal + $serviceFee + $shipping;
 
 $orderNo = 'INV'.date('YmdHis').rand(100,999);
-$pointsEarned = calculatePointsFromSubtotal($subtotal);
+$pointsPending = calculatePointsFromSubtotal($subtotal);
 $customerData = [
   'name' => $_POST['full_name'],
   'phone' => $_SESSION['customer_phone'] ?? $_POST['phone'],
@@ -41,27 +42,36 @@ $customerData = [
   'province' => $_POST['province'],
   'postal_code' => $_POST['postal_code'],
 ];
-$customerInfo = upsertCustomerPoints($customerData, $pointsEarned, $_SESSION['customer_id'] ?? null);
-$_SESSION['customer_id'] = (int)($customerInfo['id'] ?? $_SESSION['customer_id'] ?? 0);
+$customerId = (int)($_SESSION['customer_id'] ?? 0);
+$customerInfo = getCustomerById($customerId);
+if(!$customerInfo){
+  http_response_code(403);
+  exit('Akun pelanggan tidak ditemukan. Silakan masuk kembali.');
+}
+$customerInfo = updateCustomerById($customerId, $customerData);
 $_SESSION['customer_name'] = $customerInfo['name'];
 $_SESSION['customer_phone'] = $customerInfo['phone'];
 $_SESSION['customer_address'] = $customerInfo['address'];
 $_SESSION['customer_city'] = $customerInfo['city'];
 $_SESSION['customer_province'] = $customerInfo['province'];
 $_SESSION['customer_postal_code'] = $customerInfo['postal_code'];
-$_SESSION['customer_points_balance'] = $customerInfo['points_balance'];
-$_SESSION['customer_voucher_count'] = $customerInfo['voucher_count'];
+$_SESSION['customer_points_balance'] = (int)$customerInfo['points_balance'];
+$_SESSION['customer_voucher_count'] = (int)$customerInfo['voucher_count'];
+$pointsEarned = 0;
 
 $lastOrder = [
   'order_no' => $orderNo,
   'items' => array_values($cart),
   'subtotal' => $subtotal,
+  'service_fee' => $serviceFee,
   'courier' => $courier,
   'service' => $service,
   'shipping' => $shipping,
   'total' => $total,
   'points_earned' => $pointsEarned,
-  'voucher_awarded' => $customerInfo['voucher_awarded'] ?? 0,
+  'points_pending' => $pointsPending,
+  'payment_status' => 'pending',
+  'voucher_awarded' => 0,
   'points_balance' => $customerInfo['points_balance'] ?? 0,
   'voucher_count' => $customerInfo['voucher_count'] ?? 0,
   'customer' => [
@@ -90,8 +100,10 @@ createOrder([
   'courier' => $courier,
   'service' => $service,
   'subtotal' => $subtotal,
+  'service_fee' => $serviceFee,
   'shipping_cost' => $shipping,
   'total' => $total,
+  'payment_status' => 'pending',
   'points_earned' => $pointsEarned,
   'voucher_awarded' => $customerInfo['voucher_awarded'] ?? 0,
 ], array_values($cart));
@@ -115,8 +127,10 @@ foreach($cart as $it){
 }
 $lines[] = '';
 $lines[] = 'Subtotal: ' . formatRupiah($subtotal);
+$lines[] = 'Biaya layanan (5%): ' . formatRupiah($serviceFee);
 $lines[] = 'Ongkir: ' . formatRupiah($shipping) . ' (' . $courier . ' ' . $service . ')';
 $lines[] = 'Total: ' . formatRupiah($total);
+$lines[] = 'Status pembayaran: Menunggu konfirmasi';
 $lines[] = '';
 $lines[] = '*Silakan konfirmasi pesanan ini segera.*';
 
@@ -125,7 +139,7 @@ $waLink = 'https://api.whatsapp.com/send/?phone='.$phoneAdmin.'&text='.rawurlenc
 
 ?>
 <div class="card p-4">
-  <h3 class="mb-3">Terima kasih! Pesanan kamu kami terima.</h3>
+  <h3 class="mb-3">Pesanan dibuat, menunggu pembayaran.</h3>
   <div class="mb-2">No. Pesanan: <strong><?php echo esc($orderNo); ?></strong></div>
   <div class="row g-4 mt-1">
     <div class="col-md-6">
@@ -139,15 +153,17 @@ $waLink = 'https://api.whatsapp.com/send/?phone='.$phoneAdmin.'&text='.rawurlenc
     <div class="col-md-6">
       <h5>Ringkasan</h5>
       <div class="d-flex justify-content-between"><span>Subtotal</span><strong><?php echo formatRupiah($subtotal); ?></strong></div>
+      <div class="d-flex justify-content-between"><span>Biaya layanan (5%)</span><strong><?php echo formatRupiah($serviceFee); ?></strong></div>
       <div class="d-flex justify-content-between"><span>Kurir</span><span><?php echo esc($courier); ?> - <?php echo esc($service); ?></span></div>
       <div class="d-flex justify-content-between"><span>Ongkir</span><strong><?php echo formatRupiah($shipping); ?></strong></div>
       <hr>
       <div class="d-flex justify-content-between"><span>Total</span><strong><?php echo formatRupiah($total); ?></strong></div>
       <div class="mt-3 alert alert-success py-2">
-        <div><strong>Poin Diperoleh:</strong> <?php echo (int)$pointsEarned; ?> poin dari subtotal belanja.</div>
+        <div><strong>Status:</strong> Menunggu konfirmasi pembayaran.</div>
+        <div><strong>Poin setelah pembayaran terkonfirmasi:</strong> <?php echo (int)$pointsPending; ?> poin.</div>
         <div><strong>Poin Saat Ini:</strong> <?php echo (int)($customerInfo['points_balance'] ?? 0); ?> poin.</div>
         <div><strong>Voucher Terkumpul:</strong> <?php echo (int)($customerInfo['voucher_count'] ?? 0); ?> voucher.</div>
-        <?php if((int)$pointsEarned === 0): ?>
+        <?php if((int)$pointsPending === 0): ?>
           <div class="small">Pesanan ini belum mencapai Rp 10.000 untuk mendapat 1 poin. Tambahkan belanja lebih dari Rp 10.000.</div>
         <?php endif; ?>
         <small>Setiap 10.000 belanja = 1 poin. 5 poin ditukar menjadi hadiah eco-friendly.</small>

@@ -86,10 +86,12 @@ body{background:linear-gradient(180deg,#f9fcf3 0%,var(--bg) 100%); color:var(--t
     <div class="col-md-6">
       <div class="card p-3">
         <div class="fw-semibold mb-1">Pengiriman:</div>
+        <div class="text-muted small">Status pembayaran: <?php echo esc(ucfirst($order['payment_status'] ?? 'pending')); ?></div>
         <div class="text-muted small">Kurir: <?php echo esc($order['courier']); ?> (<?php echo esc($order['service']); ?>)</div>
         <div class="text-muted small">Ongkir: <?php echo formatRupiah($order['shipping']); ?></div>
         <div class="text-muted small">Subtotal: <?php echo formatRupiah($order['subtotal']); ?></div>
-        <?php if(!empty($order['points_earned']) || !empty($order['voucher_awarded'])): ?>
+        <div class="text-muted small">Biaya layanan (5%): <?php echo formatRupiah($order['service_fee'] ?? 0); ?></div>
+        <?php if(($order['payment_status'] ?? 'pending') === 'pending'): ?><div class="text-muted small">Poin yang akan diperoleh setelah pembayaran: <?php echo (int)($order['points_pending'] ?? 0); ?> poin</div><?php elseif(!empty($order['points_earned']) || !empty($order['voucher_awarded'])): ?>
         <div class="text-muted small">Poin Diperoleh: <?php echo (int)($order['points_earned'] ?? 0); ?> poin</div>
         <div class="text-muted small">Poin Saat Ini: <?php echo (int)($order['points_balance'] ?? 0); ?> poin</div>
         <div class="text-muted small">Voucher Terkumpul: <?php echo (int)($order['voucher_count'] ?? 0); ?> voucher</div>
@@ -120,6 +122,7 @@ body{background:linear-gradient(180deg,#f9fcf3 0%,var(--bg) 100%); color:var(--t
         </tbody>
         <tfoot>
           <tr><th colspan="5" class="text-end">Subtotal</th><th class="text-end"><?php echo formatRupiah($order['subtotal']); ?></th></tr>
+          <tr><th colspan="5" class="text-end">Biaya layanan (5%)</th><th class="text-end"><?php echo formatRupiah($order['service_fee'] ?? 0); ?></th></tr>
           <tr><th colspan="5" class="text-end">Ongkir (<?php echo esc($order['courier'].' - '.$order['service']); ?>)</th><th class="text-end"><?php echo formatRupiah($order['shipping']); ?></th></tr>
           <tr><th colspan="5" class="text-end">Total</th><th class="text-end"><?php echo formatRupiah($order['total']); ?></th></tr>
         </tfoot>

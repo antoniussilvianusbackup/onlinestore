@@ -29,6 +29,8 @@ try{
   <div class="d-flex gap-2">
     <a href="sellers.php" class="btn btn-outline-secondary"><i class="fa fa-store"></i> Kelola Seller</a>
     <a href="voucher_rewards.php" class="btn btn-outline-success"><i class="fa fa-gift"></i> Kelola Reward Voucher</a>
+    <a href="community.php" class="btn btn-outline-success"><i class="fa fa-seedling"></i> Kelola Komunitas</a>
+    <a href="orders.php" class="btn btn-outline-primary"><i class="fa fa-receipt"></i> Verifikasi Pesanan</a>
     <a href="products.php?action=new" class="btn btn-primary"><i class="fa fa-plus"></i> Produk Baru</a>
   </div>
 </div>

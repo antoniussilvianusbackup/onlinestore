@@ -10,6 +10,7 @@ if(!$customer){
 }
 $rewardOptions = getVoucherRewards();
 $redemptions = getCustomerVoucherRedemptions($customer['id'], 10);
+$orders = getCustomerOrders($customer['id'], 20);
 $redeemMessage = null;
 if($_SERVER['REQUEST_METHOD'] === 'POST'){
   if(($_POST['action'] ?? '') === 'redeem'){
@@ -161,4 +162,7 @@ include 'header.php';
     </div>
   </div>
 </div>
+<div class="row justify-content-center mt-4"><div class="col-md-8"><section class="card p-3"><h4>Riwayat Pesanan</h4><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>No. order</th><th>Tanggal</th><th class="text-end">Total</th><th>Status</th><th>Poin</th></tr></thead><tbody>
+<?php foreach($orders as $order): $statusLabels=['pending'=>'Menunggu pembayaran','paid'=>'Lunas','cancelled'=>'Dibatalkan']; ?><tr><td><?php echo esc($order['order_no']); ?></td><td><?php echo esc($order['created_at']); ?></td><td class="text-end"><?php echo formatRupiah($order['total']); ?></td><td><?php echo esc($statusLabels[$order['payment_status']] ?? $order['payment_status']); ?></td><td><?php echo (int)$order['points_earned']; ?></td></tr><?php endforeach; ?>
+<?php if(!$orders): ?><tr><td colspan="5" class="text-muted text-center">Belum ada pesanan.</td></tr><?php endif; ?></tbody></table></div></section></div></div>
 <?php include 'footer.php'; ?>

@@ -32,8 +32,11 @@ function ensureOrderSchema(){
     courier VARCHAR(50) NULL,
     service VARCHAR(50) NULL,
     subtotal INT NOT NULL DEFAULT 0,
+    service_fee INT NOT NULL DEFAULT 0,
     shipping_cost INT NOT NULL DEFAULT 0,
     total INT NOT NULL DEFAULT 0,
+    payment_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    auction_id INT NULL UNIQUE,
     points_earned INT NOT NULL DEFAULT 0,
     voucher_awarded INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -65,8 +68,11 @@ function ensureOrderSchema(){
   try{ $pdo->exec("ALTER TABLE orders ADD COLUMN courier VARCHAR(50) NULL"); }catch(Throwable $e){}
   try{ $pdo->exec("ALTER TABLE orders ADD COLUMN service VARCHAR(50) NULL"); }catch(Throwable $e){}
   try{ $pdo->exec("ALTER TABLE orders ADD COLUMN subtotal INT NOT NULL DEFAULT 0"); }catch(Throwable $e){}
+  try{ $pdo->exec("ALTER TABLE orders ADD COLUMN service_fee INT NOT NULL DEFAULT 0"); }catch(Throwable $e){}
   try{ $pdo->exec("ALTER TABLE orders ADD COLUMN shipping_cost INT NOT NULL DEFAULT 0"); }catch(Throwable $e){}
   try{ $pdo->exec("ALTER TABLE orders ADD COLUMN total INT NOT NULL DEFAULT 0"); }catch(Throwable $e){}
+  try{ $pdo->exec("ALTER TABLE orders ADD COLUMN payment_status VARCHAR(20) NOT NULL DEFAULT 'paid'"); }catch(Throwable $e){}
+  try{ $pdo->exec("ALTER TABLE orders ADD COLUMN auction_id INT NULL UNIQUE"); }catch(Throwable $e){}
   try{ $pdo->exec("ALTER TABLE orders ADD COLUMN customer_id INT NULL"); }catch(Throwable $e){}
   try{ $pdo->exec("ALTER TABLE orders ADD COLUMN points_earned INT NOT NULL DEFAULT 0"); }catch(Throwable $e){}
   try{ $pdo->exec("ALTER TABLE orders ADD COLUMN voucher_awarded INT NOT NULL DEFAULT 0"); }catch(Throwable $e){}
@@ -104,6 +110,7 @@ function ensureSellerColumns(){
   if(!isset($columns['username'])){ $alterParts[] = "ADD COLUMN username VARCHAR(100) NULL"; }
   if(!isset($columns['password_hash'])){ $alterParts[] = "ADD COLUMN password_hash VARCHAR(255) NULL"; }
   if(!isset($columns['is_active'])){ $alterParts[] = "ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1"; }
+  if(!isset($columns['bonus_points_balance'])){ $alterParts[] = "ADD COLUMN bonus_points_balance INT NOT NULL DEFAULT 0"; }
   if($alterParts){
     $pdo->exec("ALTER TABLE sellers " . implode(', ', $alterParts));
   }
@@ -145,6 +152,509 @@ function ensureCustomersSchema(){
     last_order_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   ) ENGINE=InnoDB");
+}
+
+function ensureCommunitySchema(){
+  $pdo = getPDO();
+  ensureCustomersSchema();
+  ensureSellersSchema();
+  ensureOrderSchema();
+  $pdo->exec("CREATE TABLE IF NOT EXISTS diy_resources (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(180) NOT NULL,
+    description TEXT NULL,
+    resource_type VARCHAR(20) NOT NULL DEFAULT 'video',
+    resource_url VARCHAR(500) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS diy_submissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    customer_name VARCHAR(120) NOT NULL,
+    school_name VARCHAR(180) NULL,
+    title VARCHAR(180) NOT NULL,
+    description TEXT NULL,
+    video_path VARCHAR(255) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    points_awarded INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_diy_submissions_status (status)
+  ) ENGINE=InnoDB");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS auctions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(180) NOT NULL,
+    description TEXT NULL,
+    image_url VARCHAR(500) NULL,
+    starts_at DATETIME NOT NULL,
+    ends_at DATETIME NOT NULL,
+    starting_bid INT NOT NULL DEFAULT 0,
+    min_increment INT NOT NULL DEFAULT 10000,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS auction_bids (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    auction_id INT NOT NULL,
+    customer_id INT NOT NULL,
+    customer_name VARCHAR(120) NOT NULL,
+    bid_amount INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_auction_bids_auction (auction_id, bid_amount),
+    CONSTRAINT fk_auction_bids_auction FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS auction_settlements (
+    auction_id INT PRIMARY KEY,
+    winner_customer_id INT NULL,
+    winner_name VARCHAR(120) NULL,
+    winning_bid INT NOT NULL DEFAULT 0,
+    order_id INT NULL UNIQUE,
+    settlement_status VARCHAR(20) NOT NULL,
+    finalized_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_auction_settlements_auction FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS school_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(180) NOT NULL,
+    description TEXT NULL,
+    starts_at DATETIME NOT NULL,
+    ends_at DATETIME NOT NULL,
+    top_prize VARCHAR(255) NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    is_finalized TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB");
+  try{ $pdo->exec("ALTER TABLE school_events ADD COLUMN is_finalized TINYINT(1) NOT NULL DEFAULT 0"); }catch(Throwable $e){}
+  $pdo->exec("CREATE TABLE IF NOT EXISTS school_scores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    school_name VARCHAR(180) NOT NULL,
+    team_name VARCHAR(180) NOT NULL,
+    score INT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_school_team_event (event_id, school_name, team_name),
+    CONSTRAINT fk_school_scores_event FOREIGN KEY (event_id) REFERENCES school_events(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS school_submissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    customer_id INT NOT NULL,
+    customer_name VARCHAR(120) NOT NULL,
+    school_name VARCHAR(180) NOT NULL,
+    team_name VARCHAR(180) NOT NULL,
+    mission_description TEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_school_submissions_status (status),
+    CONSTRAINT fk_school_submissions_event FOREIGN KEY (event_id) REFERENCES school_events(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS school_awards (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    rank_position TINYINT NOT NULL,
+    school_name VARCHAR(180) NOT NULL,
+    team_name VARCHAR(180) NOT NULL,
+    prize VARCHAR(255) NULL,
+    award_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    awarded_at TIMESTAMP NULL,
+    UNIQUE KEY uq_school_award_rank (event_id, rank_position),
+    CONSTRAINT fk_school_awards_event FOREIGN KEY (event_id) REFERENCES school_events(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS seller_bonus_periods (
+    quarter_start DATE PRIMARY KEY,
+    finalized_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS seller_bonus_awards (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    seller_id INT NOT NULL,
+    quarter_start DATE NOT NULL,
+    points INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_seller_quarter_bonus (seller_id, quarter_start)
+  ) ENGINE=InnoDB");
+}
+
+function getDiyResources($activeOnly = true){
+  ensureCommunitySchema();
+  $where = $activeOnly ? 'WHERE is_active=1' : '';
+  return getPDO()->query("SELECT * FROM diy_resources $where ORDER BY created_at DESC")->fetchAll();
+}
+
+function addDiyResource($data){
+  ensureCommunitySchema();
+  $type = in_array(($data['resource_type'] ?? ''), ['video','ebook'], true) ? $data['resource_type'] : 'video';
+  $url = trim($data['resource_url'] ?? '');
+  if(!filter_var($url, FILTER_VALIDATE_URL) || !in_array(parse_url($url, PHP_URL_SCHEME), ['http','https'], true)) throw new RuntimeException('URL panduan harus berupa tautan HTTP/HTTPS yang valid.');
+  if(trim($data['title'] ?? '') === '') throw new RuntimeException('Judul panduan wajib diisi.');
+  $st = getPDO()->prepare("INSERT INTO diy_resources (title, description, resource_type, resource_url, is_active) VALUES (?,?,?,?,1)");
+  $st->execute([trim($data['title']), trim($data['description'] ?? ''), $type, $url]);
+}
+
+function getCommunityAuctions($activeOnly = true){
+  ensureCommunitySchema();
+  $active = $activeOnly ? 'WHERE a.is_active=1' : '';
+  return getPDO()->query("SELECT a.*, COALESCE((SELECT MAX(bid_amount) FROM auction_bids WHERE auction_id=a.id), a.starting_bid) AS current_bid,
+    (SELECT COUNT(*) FROM auction_bids WHERE auction_id=a.id) AS bid_count
+    FROM auctions a $active ORDER BY a.ends_at ASC")->fetchAll();
+}
+
+function getAuctionSettlements(){
+  ensureCommunitySchema();
+  return getPDO()->query("SELECT s.*, a.title AS auction_title, o.order_no, o.payment_status
+    FROM auction_settlements s JOIN auctions a ON a.id=s.auction_id LEFT JOIN orders o ON o.id=s.order_id
+    ORDER BY s.finalized_at DESC")->fetchAll();
+}
+
+function getCustomerAuctionOrders($customerId){
+  ensureCommunitySchema();
+  $st = getPDO()->prepare("SELECT o.order_no, o.total, o.payment_status, a.title AS auction_title
+    FROM orders o JOIN auctions a ON a.id=o.auction_id WHERE o.customer_id=? ORDER BY o.created_at DESC");
+  $st->execute([(int)$customerId]);
+  return $st->fetchAll();
+}
+
+function settleAuction($auctionId){
+  ensureCommunitySchema();
+  $pdo = getPDO();
+  $pdo->beginTransaction();
+  try{
+    $existing = $pdo->prepare("SELECT * FROM auction_settlements WHERE auction_id=? FOR UPDATE");
+    $existing->execute([(int)$auctionId]);
+    $settlement = $existing->fetch();
+    if($settlement){ $pdo->commit(); return $settlement; }
+    $auctionSt = $pdo->prepare("SELECT * FROM auctions WHERE id=? FOR UPDATE");
+    $auctionSt->execute([(int)$auctionId]);
+    $auction = $auctionSt->fetch();
+    if(!$auction) throw new RuntimeException('Lelang tidak ditemukan.');
+    if(date('Y-m-d H:i:s') < $auction['ends_at']) throw new RuntimeException('Lelang belum mencapai waktu penutupan.');
+    $bidSt = $pdo->prepare("SELECT * FROM auction_bids WHERE auction_id=? ORDER BY bid_amount DESC, id ASC LIMIT 1");
+    $bidSt->execute([(int)$auctionId]);
+    $winner = $bidSt->fetch();
+    if(!$winner){
+      $pdo->prepare("INSERT INTO auction_settlements (auction_id, settlement_status) VALUES (?, 'no_bids')")->execute([(int)$auctionId]);
+      $pdo->prepare("UPDATE auctions SET is_active=0 WHERE id=?")->execute([(int)$auctionId]);
+      $pdo->commit();
+      return ['auction_id'=>(int)$auctionId, 'settlement_status'=>'no_bids'];
+    }
+    $customerSt = $pdo->prepare("SELECT * FROM customers WHERE id=?");
+    $customerSt->execute([(int)$winner['customer_id']]);
+    $customer = $customerSt->fetch();
+    if(!$customer) throw new RuntimeException('Akun pemenang lelang tidak ditemukan.');
+    $serviceFee = calculateServiceFee($winner['bid_amount']);
+    $orderId = createOrder([
+      'order_no'=>'AUC'.str_pad((string)$auctionId, 6, '0', STR_PAD_LEFT).date('ymd'),
+      'customer_id'=>(int)$customer['id'], 'customer_name'=>$customer['name'],
+      'customer_phone'=>$customer['phone'], 'customer_address'=>$customer['address'] ?? '',
+      'customer_city'=>$customer['city'] ?? '', 'customer_province'=>$customer['province'] ?? '',
+      'customer_postal_code'=>$customer['postal_code'] ?? '',
+      'customer_notes'=>'Pemenang lelang: '.$auction['title'],
+      'courier'=>'Lelang', 'service'=>'Koordinasi admin',
+      'subtotal'=>(int)$winner['bid_amount'], 'service_fee'=>$serviceFee,
+      'shipping_cost'=>0, 'total'=>(int)$winner['bid_amount']+$serviceFee,
+      'payment_status'=>'pending', 'auction_id'=>(int)$auctionId,
+      'points_earned'=>0, 'voucher_awarded'=>0,
+    ], [[
+      'id'=>null, 'name'=>'Lelang: '.$auction['title'], 'size'=>'-',
+      'price'=>(int)$winner['bid_amount'], 'qty'=>1,
+    ]], true);
+    $pdo->prepare("INSERT INTO auction_settlements (auction_id, winner_customer_id, winner_name, winning_bid, order_id, settlement_status) VALUES (?,?,?,?,?,'pending_payment')")
+      ->execute([(int)$auctionId, (int)$customer['id'], $customer['name'], (int)$winner['bid_amount'], $orderId]);
+    $pdo->prepare("UPDATE auctions SET is_active=0 WHERE id=?")->execute([(int)$auctionId]);
+    $pdo->commit();
+    return ['auction_id'=>(int)$auctionId, 'winner_customer_id'=>(int)$customer['id'], 'winner_name'=>$customer['name'], 'winning_bid'=>(int)$winner['bid_amount'], 'order_id'=>$orderId, 'settlement_status'=>'pending_payment'];
+  }catch(Throwable $e){
+    if($pdo->inTransaction()) $pdo->rollBack();
+    throw $e;
+  }
+}
+
+function addCommunityAuction($data){
+  ensureCommunitySchema();
+  if(trim($data['title'] ?? '') === '') throw new RuntimeException('Nama barang lelang wajib diisi.');
+  if(strtotime($data['ends_at'] ?? '') <= strtotime($data['starts_at'] ?? '')) throw new RuntimeException('Waktu akhir lelang harus setelah waktu mulai.');
+  $imageUrl = trim($data['image_url'] ?? '');
+  if($imageUrl !== '' && (!filter_var($imageUrl, FILTER_VALIDATE_URL) || !in_array(parse_url($imageUrl, PHP_URL_SCHEME), ['http','https'], true))) throw new RuntimeException('URL foto harus menggunakan HTTP/HTTPS.');
+  $start = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $data['starts_at'])));
+  $end = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $data['ends_at'])));
+  $st = getPDO()->prepare("INSERT INTO auctions (title, description, image_url, starts_at, ends_at, starting_bid, min_increment, is_active) VALUES (?,?,?,?,?,?,?,1)");
+  $st->execute([trim($data['title']), trim($data['description'] ?? ''), $imageUrl, $start, $end, max(1, (int)($data['starting_bid'] ?? 1)), max(1000, (int)($data['min_increment'] ?? 10000))]);
+}
+
+function placeAuctionBid($auctionId, $customerId, $customerName, $amount){
+  ensureCommunitySchema();
+  $pdo = getPDO();
+  $pdo->beginTransaction();
+  try{
+    $st = $pdo->prepare("SELECT * FROM auctions WHERE id=? AND is_active=1 FOR UPDATE");
+    $st->execute([(int)$auctionId]);
+    $auction = $st->fetch();
+    $now = date('Y-m-d H:i:s');
+    if(!$auction || $now < $auction['starts_at'] || $now >= $auction['ends_at']) throw new RuntimeException('Lelang belum dibuka atau sudah berakhir.');
+    $bidSt = $pdo->prepare("SELECT MAX(bid_amount) FROM auction_bids WHERE auction_id=?");
+    $bidSt->execute([(int)$auctionId]);
+    $highest = $bidSt->fetchColumn();
+    $minimum = $highest === false || $highest === null ? max(1, (int)$auction['starting_bid']) : (int)$highest + (int)$auction['min_increment'];
+    if((int)$amount < $minimum) throw new RuntimeException('Penawaran minimal adalah '.formatRupiah($minimum).'.');
+    $insert = $pdo->prepare("INSERT INTO auction_bids (auction_id, customer_id, customer_name, bid_amount) VALUES (?,?,?,?)");
+    $insert->execute([(int)$auctionId, (int)$customerId, $customerName, (int)$amount]);
+    $pdo->commit();
+  }catch(Throwable $e){
+    if($pdo->inTransaction()) $pdo->rollBack();
+    throw $e;
+  }
+}
+
+function getBuyerLeaderboard($limit = 10){
+  ensureCommunitySchema();
+  $st = getPDO()->prepare("SELECT c.id, c.name, COUNT(o.id) AS order_count, COALESCE(SUM(o.subtotal),0) AS spend_total, COALESCE(SUM(o.points_earned),0) AS points_total
+    FROM customers c JOIN orders o ON o.customer_id=c.id WHERE o.payment_status='paid' GROUP BY c.id, c.name ORDER BY points_total DESC, spend_total DESC LIMIT ?");
+  $st->bindValue(1, (int)$limit, PDO::PARAM_INT);
+  $st->execute();
+  return $st->fetchAll();
+}
+
+function getSellerLeaderboard($limit = 10){
+  ensureCommunitySchema();
+  $year = (int)date('Y');
+  $quarter = intdiv((int)date('n') - 1, 3);
+  $start = sprintf('%04d-%02d-01', $year, $quarter * 3 + 1);
+  $end = date('Y-m-d', strtotime($start.' +3 months'));
+  $st = getPDO()->prepare("SELECT s.id, s.name,
+    (SELECT COUNT(*) FROM products p WHERE p.seller_id=s.id AND p.created_at>=? AND p.created_at<?) AS products_created,
+    (SELECT COALESCE(SUM(oi.qty),0) FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE oi.seller_id=s.id AND o.payment_status='paid' AND o.created_at>=? AND o.created_at<?) AS units_sold,
+    (SELECT COALESCE(SUM(oi.price*oi.qty),0) FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE oi.seller_id=s.id AND o.payment_status='paid' AND o.created_at>=? AND o.created_at<?) AS sales_total
+    , s.bonus_points_balance
+    FROM sellers s WHERE s.is_active=1 ORDER BY sales_total DESC, products_created DESC, s.name ASC");
+  $st->bindValue(1, $start); $st->bindValue(2, $end);
+  $st->bindValue(3, $start); $st->bindValue(4, $end);
+  $st->bindValue(5, $start); $st->bindValue(6, $end);
+  $st->execute();
+  $rows = array_values(array_filter($st->fetchAll(), function($row){ return (int)$row['sales_total'] > 0 || (int)$row['products_created'] > 0; }));
+  $rows = array_slice($rows, 0, (int)$limit);
+  foreach($rows as $index => &$row){ $row['bonus_points'] = [500, 300, 150][$index] ?? 0; }
+  unset($row);
+  return ['rows'=>$rows, 'period'=>$start.' - '.date('Y-m-d', strtotime($end.' -1 day'))];
+}
+
+function settleSellerQuarter($periodStart){
+  ensureCommunitySchema();
+  $timestamp = strtotime($periodStart);
+  if($timestamp === false) throw new RuntimeException('Periode triwulan tidak valid.');
+  $periodStart = date('Y-m-d', $timestamp);
+  $month = (int)date('n', $timestamp);
+  $quarterMonths = [1,4,7,10];
+  if((int)date('j', strtotime($periodStart)) !== 1 || !in_array($month, $quarterMonths, true)) throw new RuntimeException('Periode harus dimulai pada awal triwulan.');
+  $year = (int)date('Y');
+  $currentQuarterStart = sprintf('%04d-%02d-01', $year, intdiv((int)date('n') - 1, 3) * 3 + 1);
+  if($periodStart >= $currentQuarterStart) throw new RuntimeException('Bonus hanya dapat diselesaikan untuk triwulan yang sudah berakhir.');
+  $pdo = getPDO();
+  $periodEnd = date('Y-m-d', strtotime($periodStart.' +3 months'));
+  $pdo->beginTransaction();
+  try{
+    $period = $pdo->prepare("INSERT IGNORE INTO seller_bonus_periods (quarter_start) VALUES (?)");
+    $period->execute([$periodStart]);
+    if($period->rowCount() === 0){ $pdo->commit(); return false; }
+    $ranking = $pdo->prepare("SELECT s.id,
+      (SELECT COUNT(*) FROM products p WHERE p.seller_id=s.id AND p.created_at>=? AND p.created_at<?) AS products_created,
+      (SELECT COALESCE(SUM(oi.price*oi.qty),0) FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE oi.seller_id=s.id AND o.payment_status='paid' AND o.created_at>=? AND o.created_at<?) AS sales_total
+      FROM sellers s WHERE s.is_active=1 ORDER BY sales_total DESC, products_created DESC, s.name ASC");
+    $ranking->execute([$periodStart, $periodEnd, $periodStart, $periodEnd]);
+    $awardPoints = [500, 300, 150];
+    $eligible = array_values(array_filter($ranking->fetchAll(), function($seller){ return (int)$seller['sales_total'] > 0 || (int)$seller['products_created'] > 0; }));
+    foreach(array_slice($eligible, 0, 3) as $index => $seller){
+      $points = $awardPoints[$index] ?? 0;
+      if($points < 1) continue;
+      $pdo->prepare("INSERT INTO seller_bonus_awards (seller_id, quarter_start, points) VALUES (?,?,?)")->execute([(int)$seller['id'], $periodStart, $points]);
+      $pdo->prepare("UPDATE sellers SET bonus_points_balance=bonus_points_balance+? WHERE id=?")->execute([$points, (int)$seller['id']]);
+    }
+    $pdo->commit();
+    return true;
+  }catch(Throwable $e){
+    if($pdo->inTransaction()) $pdo->rollBack();
+    throw $e;
+  }
+}
+
+function getSellerBonusAwards($limit = 50){
+  ensureCommunitySchema();
+  return getPDO()->query("SELECT a.quarter_start, a.points, a.created_at, s.name AS seller_name
+    FROM seller_bonus_awards a JOIN sellers s ON s.id=a.seller_id ORDER BY a.quarter_start DESC, a.points DESC LIMIT ".(int)$limit)->fetchAll();
+}
+
+function getSchoolEvents($activeOnly = true){
+  ensureCommunitySchema();
+  $where = $activeOnly ? 'WHERE is_active=1 OR ends_at<=NOW()' : '';
+  return getPDO()->query("SELECT * FROM school_events $where ORDER BY ends_at DESC")->fetchAll();
+}
+
+function addSchoolEvent($data){
+  ensureCommunitySchema();
+  if(trim($data['name'] ?? '') === '') throw new RuntimeException('Nama event wajib diisi.');
+  if(strtotime($data['ends_at'] ?? '') <= strtotime($data['starts_at'] ?? '')) throw new RuntimeException('Waktu akhir event harus setelah waktu mulai.');
+  $start = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $data['starts_at'])));
+  $end = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $data['ends_at'])));
+  $st = getPDO()->prepare("INSERT INTO school_events (name, description, starts_at, ends_at, top_prize, is_active) VALUES (?,?,?,?,?,1)");
+  $st->execute([trim($data['name']), trim($data['description'] ?? ''), $start, $end, trim($data['top_prize'] ?? '')]);
+}
+
+function submitSchoolMission($data, $customerId, $customerName){
+  ensureCommunitySchema();
+  if(trim($data['school_name'] ?? '') === '' || trim($data['team_name'] ?? '') === '' || trim($data['mission_description'] ?? '') === '') throw new RuntimeException('Sekolah, tim, dan deskripsi misi wajib diisi.');
+  $eventSt = getPDO()->prepare("SELECT id FROM school_events WHERE id=? AND is_active=1 AND starts_at<=NOW() AND ends_at>NOW()");
+  $eventSt->execute([(int)($data['event_id'] ?? 0)]);
+  if(!$eventSt->fetchColumn()) throw new RuntimeException('Event tidak sedang berlangsung.');
+  $st = getPDO()->prepare("INSERT INTO school_submissions (event_id, customer_id, customer_name, school_name, team_name, mission_description) VALUES (?,?,?,?,?,?)");
+  $st->execute([(int)$data['event_id'], (int)$customerId, $customerName, trim($data['school_name'] ?? ''), trim($data['team_name'] ?? ''), trim($data['mission_description'] ?? '')]);
+}
+
+function getSchoolLeaderboard($eventId){
+  ensureCommunitySchema();
+  $st = getPDO()->prepare("SELECT school_name, team_name, score FROM school_scores WHERE event_id=? ORDER BY score DESC, school_name ASC LIMIT 20");
+  $st->execute([(int)$eventId]);
+  return $st->fetchAll();
+}
+
+function getSchoolAwards($eventId){
+  ensureCommunitySchema();
+  $st = getPDO()->prepare("SELECT * FROM school_awards WHERE event_id=? ORDER BY rank_position ASC");
+  $st->execute([(int)$eventId]);
+  return $st->fetchAll();
+}
+
+function finalizeSchoolEvent($eventId){
+  ensureCommunitySchema();
+  $pdo = getPDO();
+  $pdo->beginTransaction();
+  try{
+    $eventSt = $pdo->prepare("SELECT * FROM school_events WHERE id=? FOR UPDATE");
+    $eventSt->execute([(int)$eventId]);
+    $event = $eventSt->fetch();
+    if(!$event) throw new RuntimeException('Event sekolah tidak ditemukan.');
+    if(!empty($event['is_finalized'])){ $pdo->commit(); return; }
+    if(date('Y-m-d H:i:s') < $event['ends_at']) throw new RuntimeException('Event hanya dapat ditutup setelah waktu berakhir.');
+    $pendingSt = $pdo->prepare("SELECT COUNT(*) FROM school_submissions WHERE event_id=? AND status='pending'");
+    $pendingSt->execute([(int)$eventId]);
+    if((int)$pendingSt->fetchColumn() > 0) throw new RuntimeException('Moderasi semua misi yang menunggu sebelum menutup event.');
+    $scoreSt = $pdo->prepare("SELECT school_name, team_name, score FROM school_scores WHERE event_id=? ORDER BY score DESC, school_name ASC, team_name ASC LIMIT 3");
+    $scoreSt->execute([(int)$eventId]);
+    $insert = $pdo->prepare("INSERT INTO school_awards (event_id, rank_position, school_name, team_name, prize) VALUES (?,?,?,?,?)");
+    foreach($scoreSt->fetchAll() as $index=>$winner){
+      $insert->execute([(int)$eventId, $index+1, $winner['school_name'], $winner['team_name'], $event['top_prize']]);
+    }
+    $pdo->prepare("UPDATE school_events SET is_active=0, is_finalized=1 WHERE id=?")->execute([(int)$eventId]);
+    $pdo->commit();
+  }catch(Throwable $e){
+    if($pdo->inTransaction()) $pdo->rollBack();
+    throw $e;
+  }
+}
+
+function markSchoolAwardDelivered($awardId){
+  ensureCommunitySchema();
+  $st = getPDO()->prepare("UPDATE school_awards SET award_status='awarded', awarded_at=NOW() WHERE id=? AND award_status='pending'");
+  $st->execute([(int)$awardId]);
+  if($st->rowCount() < 1) throw new RuntimeException('Hadiah sudah dicatat atau tidak ditemukan.');
+}
+
+function saveSchoolScore($eventId, $schoolName, $teamName, $score){
+  ensureCommunitySchema();
+  $eventSt = getPDO()->prepare("SELECT is_finalized FROM school_events WHERE id=?");
+  $eventSt->execute([(int)$eventId]);
+  $isFinalized = $eventSt->fetchColumn();
+  if($isFinalized === false) throw new RuntimeException('Event sekolah tidak ditemukan.');
+  if((int)$isFinalized === 1) throw new RuntimeException('Skor tidak dapat diubah setelah podium dikunci.');
+  $st = getPDO()->prepare("INSERT INTO school_scores (event_id, school_name, team_name, score) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE score=VALUES(score)");
+  $st->execute([(int)$eventId, trim($schoolName), trim($teamName), max(0, (int)$score)]);
+}
+
+function incrementSchoolScore($eventId, $schoolName, $teamName, $score){
+  $st = getPDO()->prepare("INSERT INTO school_scores (event_id, school_name, team_name, score) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE score=score+VALUES(score)");
+  $st->execute([(int)$eventId, trim($schoolName), trim($teamName), max(0, (int)$score)]);
+}
+
+function setCommunityRecordActive($table, $id, $active){
+  ensureCommunitySchema();
+  $tables = ['diy_resources'=>'diy_resources', 'auctions'=>'auctions', 'school_events'=>'school_events'];
+  if(!isset($tables[$table])) throw new RuntimeException('Jenis data tidak valid.');
+  $st = getPDO()->prepare("UPDATE {$tables[$table]} SET is_active=? WHERE id=?");
+  $st->execute([$active ? 1 : 0, (int)$id]);
+}
+
+function getPendingCommunitySubmissions(){
+  ensureCommunitySchema();
+  return getPDO()->query("SELECT * FROM diy_submissions WHERE status='pending' ORDER BY created_at ASC")->fetchAll();
+}
+
+function getPendingSchoolSubmissions(){
+  ensureCommunitySchema();
+  return getPDO()->query("SELECT ss.*, se.name AS event_name FROM school_submissions ss JOIN school_events se ON se.id=ss.event_id WHERE ss.status='pending' ORDER BY ss.created_at ASC")->fetchAll();
+}
+
+function reviewDiySubmission($submissionId, $status, $points = 0){
+  ensureCommunitySchema();
+  if(!in_array($status, ['approved','rejected'], true)) throw new RuntimeException('Status moderasi tidak valid.');
+  $pdo = getPDO();
+  $pdo->beginTransaction();
+  try{
+    $st = $pdo->prepare("SELECT * FROM diy_submissions WHERE id=? FOR UPDATE");
+    $st->execute([(int)$submissionId]);
+    $submission = $st->fetch();
+    if(!$submission || $submission['status'] !== 'pending') throw new RuntimeException('Karya ini sudah dimoderasi atau tidak ditemukan.');
+    $award = $status === 'approved' ? max(0, (int)$points) : 0;
+    $pdo->prepare("UPDATE diy_submissions SET status=?, points_awarded=? WHERE id=?")->execute([$status, $award, (int)$submissionId]);
+    if($award > 0){
+      $customerSt = $pdo->prepare("SELECT points_balance, voucher_count FROM customers WHERE id=? FOR UPDATE");
+      $customerSt->execute([(int)$submission['customer_id']]);
+      $customer = $customerSt->fetch();
+      if($customer){
+        $total = (int)$customer['points_balance'] + $award;
+        $pdo->prepare("UPDATE customers SET points_balance=?, voucher_count=? WHERE id=?")->execute([$total % 5, (int)$customer['voucher_count'] + intdiv($total, 5), (int)$submission['customer_id']]);
+      }
+    }
+    $pdo->commit();
+  }catch(Throwable $e){
+    if($pdo->inTransaction()) $pdo->rollBack();
+    throw $e;
+  }
+}
+
+function reviewSchoolSubmission($submissionId, $approved, $score){
+  ensureCommunitySchema();
+  $pdo = getPDO();
+  $pdo->beginTransaction();
+  try{
+    $st = $pdo->prepare("SELECT * FROM school_submissions WHERE id=? FOR UPDATE");
+    $st->execute([(int)$submissionId]);
+    $submission = $st->fetch();
+    if(!$submission || $submission['status'] !== 'pending') throw new RuntimeException('Misi ini sudah dimoderasi atau tidak ditemukan.');
+    $eventSt = $pdo->prepare("SELECT is_finalized FROM school_events WHERE id=? FOR UPDATE");
+    $eventSt->execute([(int)$submission['event_id']]);
+    if((int)$eventSt->fetchColumn() === 1) throw new RuntimeException('Event sekolah sudah difinalisasi.');
+    $status = $approved ? 'approved' : 'rejected';
+    $pdo->prepare("UPDATE school_submissions SET status=? WHERE id=?")->execute([$status, (int)$submissionId]);
+    if($approved) incrementSchoolScore($submission['event_id'], $submission['school_name'], $submission['team_name'], max(0, (int)$score));
+    $pdo->commit();
+  }catch(Throwable $e){
+    if($pdo->inTransaction()) $pdo->rollBack();
+    throw $e;
+  }
+}
+
+function submitDiyVideo($file, $data, $customerId, $customerName){
+  ensureCommunitySchema();
+  if(trim($data['title'] ?? '') === '') throw new RuntimeException('Judul karya wajib diisi.');
+  if(empty($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) throw new RuntimeException('Pilih video yang akan diunggah.');
+  if((int)$file['size'] > 50 * 1024 * 1024) throw new RuntimeException('Ukuran video maksimal 50 MB.');
+  $finfo = new finfo(FILEINFO_MIME_TYPE);
+  $mime = $finfo->file($file['tmp_name']);
+  $allowed = ['video/mp4'=>'mp4', 'video/webm'=>'webm', 'video/quicktime'=>'mov'];
+  if(!isset($allowed[$mime])) throw new RuntimeException('Format video harus MP4, WebM, atau MOV.');
+  $directory = __DIR__.'/uploads/creations';
+  if(!is_dir($directory) && !mkdir($directory, 0755, true)) throw new RuntimeException('Folder unggahan tidak dapat dibuat.');
+  $filename = bin2hex(random_bytes(16)).'.'.$allowed[$mime];
+  if(!move_uploaded_file($file['tmp_name'], $directory.'/'.$filename)) throw new RuntimeException('Video gagal disimpan.');
+  $st = getPDO()->prepare("INSERT INTO diy_submissions (customer_id, customer_name, school_name, title, description, video_path) VALUES (?,?,?,?,?,?)");
+  $st->execute([(int)$customerId, $customerName, trim($data['school_name'] ?? ''), trim($data['title'] ?? ''), trim($data['description'] ?? ''), 'uploads/creations/'.$filename]);
 }
 
 function ensureVoucherRewardsSchema(){
@@ -624,10 +1134,14 @@ function calculatePointsFromSubtotal($subtotal){
   return (int) floor($subtotal / 10000);
 }
 
-function createOrder($orderData, $items){
-  ensureOrderSchema();
+function calculateServiceFee($subtotal){
+  return (int) round(max(0, (int)$subtotal) * 0.05);
+}
+
+function createOrder($orderData, $items, $schemaReady = false){
+  if(!$schemaReady) ensureOrderSchema();
   $pdo = getPDO();
-  $st = $pdo->prepare("INSERT INTO orders (order_no, customer_id, customer_name, customer_phone, customer_address, customer_city, customer_province, customer_postal_code, customer_notes, courier, service, subtotal, shipping_cost, total, points_earned, voucher_awarded) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+  $st = $pdo->prepare("INSERT INTO orders (order_no, customer_id, customer_name, customer_phone, customer_address, customer_city, customer_province, customer_postal_code, customer_notes, courier, service, subtotal, service_fee, shipping_cost, total, payment_status, auction_id, points_earned, voucher_awarded) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
   $st->execute([
     $orderData['order_no'],
     $orderData['customer_id'] ?? null,
@@ -641,8 +1155,11 @@ function createOrder($orderData, $items){
     $orderData['courier'] ?? null,
     $orderData['service'] ?? null,
     (int)$orderData['subtotal'],
+    (int)($orderData['service_fee'] ?? 0),
     (int)$orderData['shipping_cost'],
     (int)$orderData['total'],
+    $orderData['payment_status'] ?? 'pending',
+    $orderData['auction_id'] ?? null,
     (int)$orderData['points_earned'],
     (int)$orderData['voucher_awarded'],
   ]);
@@ -652,7 +1169,7 @@ function createOrder($orderData, $items){
   foreach($items as $item){
     $itemSt->execute([
       $orderId,
-      (int)($item['id'] ?? 0),
+      $item['id'] ?? null,
       $item['name'] ?? '',
       $item['size'] ?? '',
       (int)($item['price'] ?? 0),
@@ -663,6 +1180,65 @@ function createOrder($orderData, $items){
   }
 
   return $orderId;
+}
+
+function getAllOrders($limit = 200){
+  ensureOrderSchema();
+  return getPDO()->query("SELECT id, order_no, customer_id, customer_name, customer_phone, subtotal, service_fee, shipping_cost, total, payment_status, points_earned, created_at FROM orders ORDER BY created_at DESC LIMIT ".(int)$limit)->fetchAll();
+}
+
+function getCustomerOrders($customerId, $limit = 20){
+  ensureOrderSchema();
+  $st = getPDO()->prepare("SELECT order_no, total, payment_status, points_earned, created_at FROM orders WHERE customer_id=? ORDER BY created_at DESC LIMIT ?");
+  $st->bindValue(1, (int)$customerId, PDO::PARAM_INT);
+  $st->bindValue(2, (int)$limit, PDO::PARAM_INT);
+  $st->execute();
+  return $st->fetchAll();
+}
+
+function updateOrderPaymentStatus($orderId, $newStatus){
+  ensureOrderSchema();
+  if(!in_array($newStatus, ['paid','cancelled'], true)) throw new RuntimeException('Status pembayaran tidak valid.');
+  $pdo = getPDO();
+  $pdo->beginTransaction();
+  try{
+    $st = $pdo->prepare("SELECT * FROM orders WHERE id=? FOR UPDATE");
+    $st->execute([(int)$orderId]);
+    $order = $st->fetch();
+    if(!$order) throw new RuntimeException('Pesanan tidak ditemukan.');
+    if($order['payment_status'] === $newStatus){ $pdo->commit(); return $order; }
+    if($order['payment_status'] !== 'pending') throw new RuntimeException('Pesanan yang sudah diproses tidak dapat diubah.');
+    $points = $newStatus === 'paid' ? calculatePointsFromSubtotal($order['subtotal']) : 0;
+    $vouchers = 0;
+    $customer = null;
+    if($newStatus === 'paid' && !empty($order['customer_id'])){
+      $customerSt = $pdo->prepare("SELECT points_balance, voucher_count FROM customers WHERE id=? FOR UPDATE");
+      $customerSt->execute([(int)$order['customer_id']]);
+      $customer = $customerSt->fetch();
+      if($customer){
+        $pointsTotal = (int)$customer['points_balance'] + $points;
+        $vouchers = intdiv($pointsTotal, 5);
+        $pdo->prepare("UPDATE customers SET points_balance=?, voucher_count=?, last_order_at=NOW() WHERE id=?")
+          ->execute([$pointsTotal % 5, (int)$customer['voucher_count'] + $vouchers, (int)$order['customer_id']]);
+      }
+    }
+    if($newStatus === 'paid' && !$customer) $points = 0;
+    $pdo->prepare("UPDATE orders SET payment_status=?, points_earned=?, voucher_awarded=? WHERE id=?")
+      ->execute([$newStatus, $points, $vouchers, (int)$orderId]);
+    if(!empty($order['auction_id'])){
+      $settlementStatus = $newStatus === 'paid' ? 'paid' : 'cancelled';
+      $pdo->prepare("UPDATE auction_settlements SET settlement_status=? WHERE auction_id=?")
+        ->execute([$settlementStatus, (int)$order['auction_id']]);
+    }
+    $pdo->commit();
+    $order['payment_status'] = $newStatus;
+    $order['points_earned'] = $points;
+    $order['voucher_awarded'] = $vouchers;
+    return $order;
+  }catch(Throwable $e){
+    if($pdo->inTransaction()) $pdo->rollBack();
+    throw $e;
+  }
 }
 
 function addProduct($data, $file){

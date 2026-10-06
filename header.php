@@ -478,6 +478,7 @@ require_once __DIR__ . '/functions.php';
           <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>index.php">Produk</a></li>
           <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>cart.php"><i class="fa fa-shopping-cart"></i> Keranjang (<?php echo isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'qty')) : 0; ?>)</a></li>
           <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>admin/products.php">Admin</a></li>
+          <?php if (!empty($_SESSION['is_admin'])): ?><li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>admin/community.php">Kelola komunitas</a></li><li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>admin/orders.php">Verifikasi pesanan</a></li><?php endif; ?>
           <?php if (!empty($_SESSION['customer_id'])): ?>
             <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>account.php"><i class="fa fa-user"></i> Akun</a></li>
             <li class="nav-item"><a class="nav-link" href="<?php echo $BASE_PATH; ?>customer_logout.php">Logout</a></li>

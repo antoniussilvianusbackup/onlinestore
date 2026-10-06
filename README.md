@@ -68,7 +68,19 @@ Akun demo seller:
 
 Dengan akun seller, Anda bisa menambah, mengedit, dan menghapus produk sendiri.
 
-## 8. Jika ada masalah
+## 9. Fitur komunitas
+
+Buka `community.php` untuk mengakses panduan DIY, mengirim video kreasi, mengikuti lelang, melihat peringkat pembeli dan seller, serta mengikuti kompetisi sekolah. Pelanggan harus login untuk mengirim video, menawar lelang, atau mengirim misi sekolah.
+
+Admin dapat mengelola materi, lelang, event sekolah, skor tim, serta moderasi kiriman melalui **Admin > Kelola Komunitas**. Video kreasi maksimal 50 MB dalam format MP4, WebM, atau MOV. Pastikan konfigurasi PHP `upload_max_filesize` dan `post_max_size` mengizinkan unggahan sebesar itu.
+
+Setiap order menambahkan biaya layanan 5% dari subtotal barang (di luar ongkir). Biaya ini ditampilkan di checkout, konfirmasi pesanan, dan invoice. Poin kreasi baru masuk setelah admin menyetujui video.
+
+Pesanan baru berstatus menunggu pembayaran. Admin memeriksa pembayaran secara manual melalui **Admin > Verifikasi Pesanan**; poin pembeli dan penjualan seller baru dihitung setelah order ditandai lunas. Untuk lelang, admin menutup lelang yang waktunya berakhir dari **Kelola Komunitas**; sistem menetapkan penawaran tertinggi dan membuat order pemenang yang harus diverifikasi pembayarannya. Event sekolah yang berakhir juga dapat ditutup di panel komunitas untuk mengunci tiga besar dan mencatat penyerahan hadiah.
+
+Bonus seller triwulanan tidak diberikan otomatis saat leaderboard dilihat. Admin memilih periode yang sudah berakhir dan menekan **Tutup periode** di panel komunitas; setiap periode hanya dapat diselesaikan satu kali.
+
+## 10. Jika ada masalah
 Coba cek hal-hal berikut:
 
 - Apache dan MySQL sudah aktif belum
@@ -78,5 +90,5 @@ Coba cek hal-hal berikut:
 
 Kalau masih error, coba refresh browser atau restart Apache/MySQL dari XAMPP.
 
-## 9. Catatan penting
+## 11. Catatan penting
 Password default ini cocok untuk kebutuhan uji coba. Untuk website yang dipakai nyata, sebaiknya ganti password dan tambahkan keamanan tambahan.
