@@ -18,7 +18,7 @@ include '../header.php';
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div>
     <h3>Riwayat Penukaran Voucher</h3>
-    <p class="small text-muted">Lihat kegiatan penukaran hadiah eco-friendly oleh pelanggan.</p>
+    <p class="small text-muted">Lihat kegiatan penukaran voucher hadiah oleh pelanggan.</p>
   </div>
   <a href="products.php" class="btn btn-primary"><i class="fa fa-arrow-left"></i> Kembali ke Produk</a>
 </div>

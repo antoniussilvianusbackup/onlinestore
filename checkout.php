@@ -208,7 +208,7 @@ include 'header.php';
         Halo <?php echo esc($customerName ?: 'Pelanggan'); ?>, poin kamu saat ini <strong><?php echo (int)$customerPoints; ?></strong> dan voucher terkumpul <strong><?php echo (int)$customerVouchers; ?></strong>.
       </div>
       <div class="alert alert-info small mt-2 mb-0">
-        Belanja minimal Rp 10.000 mendapatkan 1 poin. 5 poin bisa ditukar menjadi voucher eco-friendly.
+        Setiap transaksi lunas minimal Rp 10.000 mendapatkan 1 poin. Lima poin dapat ditukar menjadi voucher hadiah.
       </div>
       <div class="card p-3 mt-3">
         <h5 class="mb-3">Klaim Reward</h5>

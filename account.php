@@ -68,7 +68,7 @@ include 'header.php';
           <div class="card p-3 mb-3">
             <div class="fw-semibold">Voucher Terkumpul</div>
             <div class="fs-2 text-success"><?php echo (int)$customer['voucher_count']; ?></div>
-            <div class="small text-muted">Voucher eco-friendly yang sudah bisa kamu tukarkan</div>
+            <div class="small text-muted">Voucher hadiah yang sudah bisa kamu tukarkan</div>
           </div>
         </div>
       </div>
@@ -76,7 +76,7 @@ include 'header.php';
       <?php if(!empty($error)): ?><div class="alert alert-danger"><?php echo esc($error); ?></div><?php endif; ?>
       <div class="alert alert-info">
         <p class="mb-1"><strong>Aturan Poin:</strong></p>
-        <p class="mb-0">Belanja minimal Rp 10.000 = 1 poin. 5 poin otomatis jadi 1 voucher eco-friendly.</p>
+        <p class="mb-0">Setiap transaksi lunas minimal Rp 10.000 memperoleh 1 poin. Lima poin otomatis menjadi 1 voucher hadiah.</p>
       </div>
       <div class="alert alert-success">
         <p class="mb-2"><strong>Tukar Voucher</strong></p>

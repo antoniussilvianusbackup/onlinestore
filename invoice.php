@@ -18,9 +18,9 @@ if(!$order || ($no && $order['order_no'] !== $no)){
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Invoice <?php echo esc($order['order_no']); ?> — Terra Kala</title>
+<title>Invoice <?php echo esc($order['order_no']); ?> | Terra Kala</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f5f8ef;
@@ -32,7 +32,7 @@ if(!$order || ($no && $order['order_no'] !== $no)){
   --border:#c7d9b6;
 }
 *{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-h1,h2,h3,.brand-title{font-family:'Bebas Neue','Inter',sans-serif; letter-spacing:.5px}
+h1,h2,h3,.brand-title{font-family:'Manrope','Inter',sans-serif}
 body{background:linear-gradient(180deg,#f9fcf3 0%,var(--bg) 100%); color:var(--text)}
 .invoice-page{max-width:900px; margin:24px auto; padding:0 12px}
 .logo{display:flex; align-items:center; gap:10px}
@@ -60,7 +60,7 @@ body{background:linear-gradient(180deg,#f9fcf3 0%,var(--bg) 100%); color:var(--t
       <img src="logo1.png" alt="Logo Terra Kala" onerror="this.onerror=null;this.src='favicon.svg';">
       <div>
         <div class="fw-bold brand-title">Terra Kala</div>
-        <div class="text-muted small">Eco Recycled Store<br>Kp. Pitara Rangkapanjaya, Depok<br>Telp/WA: 081414002303</div>
+        <div class="text-muted small">Produk Guna Ulang dan Upcycle<br>Kp. Pitara Rangkapanjaya, Depok<br>Telp/WA: 081414002303</div>
       </div>
     </div>
     <div class="text-end">

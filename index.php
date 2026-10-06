@@ -16,7 +16,7 @@ $homeAuctions = array_slice(array_values(array_filter(getCommunityAuctions(), fu
 })), 0, 2);
 ?>
 
-<!-- Rebelstuff Hero -->
+<!-- Terra Kala Hero -->
 <section class="mb-5">
   <style>
     .store-hero { padding:1.5rem; border-radius:16px; }
@@ -35,12 +35,12 @@ $homeAuctions = array_slice(array_values(array_filter(getCommunityAuctions(), fu
   <div class="store-hero rounded-4 hero-gradient shadow-sm">
     <div class="row g-4 align-items-center">
       <div class="col-md-7">
-        <h1 class="display-6 fw-bold mb-3">Terra Kala Eco Recycled Store</h1>
-        <p class="lead mb-3">Tempat belanja produk ramah lingkungan yang dibuat dari material daur ulang, modern, dan tetap stylish.</p>
+        <h1 class="display-6 fw-bold mb-3">Terra Kala: Pilihan Sirkular untuk Keseharian</h1>
+        <p class="lead mb-3">Temukan produk guna ulang dan hasil upcycle, pelajari cara mengurangi sampah, lalu dukung karya komunitas lokal.</p>
         <div class="d-flex gap-2 flex-wrap mb-3">
-          <span class="badge pill-badge">Produk Daur Ulang</span>
-          <span class="badge pill-badge">Bahan Ramah Lingkungan</span>
-          <span class="badge pill-badge">Zero Waste Mindset</span>
+          <span class="badge pill-badge">Produk Guna Ulang</span>
+          <span class="badge pill-badge">Material Daur Ulang</span>
+          <span class="badge pill-badge">Kreasi Upcycle</span>
         </div>
         <div class="d-flex gap-2 flex-wrap">
           <a href="#shop" class="btn btn-light"><i class="fa fa-cart-plus me-1"></i> Jelajahi Produk</a>
@@ -52,22 +52,22 @@ $homeAuctions = array_slice(array_values(array_filter(getCommunityAuctions(), fu
           <div class="store-feature">
             <div class="icon"><i class="fa-solid fa-bolt"></i></div>
             <div class="store-feature-copy">
-              <div class="fw-semibold">Filosofi Desain</div>
-              <div class="small">Kebebasan berekspresi & estetika urban yang berani.</div>
+              <div class="fw-semibold">Nilai Guna Baru</div>
+              <div class="small">Material yang masih layak diberi fungsi dan manfaat baru.</div>
             </div>
           </div>
           <div class="store-feature">
             <div class="icon"><i class="fa-solid fa-star"></i></div>
             <div class="store-feature-copy">
-              <div class="fw-semibold">Komitmen Kualitas</div>
-              <div class="small">Material nyaman, detail rapi, dipakai pede seharian.</div>
+              <div class="fw-semibold">Pilihan Bertanggung Jawab</div>
+              <div class="small">Utamakan barang yang awet, dapat digunakan kembali, dan dirawat dengan baik.</div>
             </div>
           </div>
           <div class="store-feature">
             <div class="icon"><i class="fa-solid fa-fire"></i></div>
             <div class="store-feature-copy">
-              <div class="fw-semibold">Spirit Rebel</div>
-              <div class="small">Berani tampil autentik tanpa takut penilaian orang.</div>
+              <div class="fw-semibold">Gerak Bersama</div>
+              <div class="small">Belajar, berbagi keterampilan, dan mengurangi barang terbuang bersama komunitas.</div>
             </div>
           </div>
         </div>
@@ -147,7 +147,7 @@ $homeAuctions = array_slice(array_values(array_filter(getCommunityAuctions(), fu
           <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accAbout">
             <div class="accordion-body">
               Desain kami menggabungkan estetika modern dengan semangat keberlanjutan. Setiap produk Terra Kala dibuat untuk memberi nilai lebih pada gaya hidup Anda, sambil mengurangi limbah dan mendukung penggunaan material daur ulang secara lebih sadar.
-              Kami percaya bahwa fashion dan lifestyle yang berkelanjutan bisa tetap kuat, menarik, dan penuh karakter.
+              Kami percaya kebiasaan berkelanjutan tumbuh dari pilihan sederhana: memakai barang lebih lama, menggunakan kembali material, dan mengurangi barang terbuang.
             </div>
           </div>
         </div>
@@ -177,21 +177,19 @@ $homeAuctions = array_slice(array_values(array_filter(getCommunityAuctions(), fu
         <div class="col-lg-7">
           <h2 class="mb-2 section-title">Tentang Kami</h2>
           <div class="divider"></div>
-          <p>Terra Kala adalah brand lokal yang hadir untuk menghadirkan solusi fashion dan lifestyle yang lebih ramah lingkungan. Kami percaya bahwa setiap pilihan belanja bisa menjadi langkah kecil yang berdampak besar bagi bumi.
-          Dengan fokus pada produk daur ulang dan prinsip reduce, reuse, dan recycle, Terra Kala mengajak Anda untuk tampil stylish tanpa mengorbankan tanggung jawab terhadap lingkungan.
-          Kami menghadirkan desain yang orisinal, kualitas yang nyaman dipakai, dan proses produksi yang lebih sadar akan limbah.
-          Setiap produk yang kami tawarkan dirancang untuk memberi nilai lebih pada gaya hidup modern yang lebih hijau dan berkelanjutan.</p>
+          <p>Terra Kala adalah marketplace dan ruang belajar untuk produk guna ulang, barang preloved, serta karya upcycle. Kami mengajak masyarakat memperpanjang usia pakai barang dan mengurangi sampah melalui pilihan yang lebih bijak.
+          Pembeli dapat menemukan produk dari seller lokal, mempelajari cara mengolah material bekas, dan mengikuti kegiatan komunitas. Kami mendorong informasi produk yang jelas serta kebiasaan merawat barang agar dapat digunakan lebih lama.</p>
           <div class="row g-3 mt-1">
             <div class="col-sm-6">
               <div class="p-3 border rounded-3 h-100">
-                <div class="fw-semibold mb-1"><i class="fa-solid fa-pen-ruler me-2 text-primary"></i>Desain Orisinal</div>
-                <div class="small text-muted">Setiap rilisan digarap dari konsep, bukan sekadar cetak ulang.</div>
+                <div class="fw-semibold mb-1"><i class="fa-solid fa-pen-ruler me-2 text-primary"></i>Kreasi Upcycle</div>
+                <div class="small text-muted">Material yang tersisa diolah menjadi barang baru yang berguna.</div>
               </div>
             </div>
             <div class="col-sm-6">
               <div class="p-3 border rounded-3 h-100">
-                <div class="fw-semibold mb-1"><i class="fa-solid fa-shirt me-2 text-primary"></i>Material Nyaman</div>
-                <div class="small text-muted">Pilihan kain ramah kulit, pas buat dipakai seharian.</div>
+                <div class="fw-semibold mb-1"><i class="fa-solid fa-shirt me-2 text-primary"></i>Rawat dan Pakai Kembali</div>
+                <div class="small text-muted">Rawat barang dengan baik agar masa gunanya lebih panjang.</div>
               </div>
             </div>
           </div>
@@ -200,16 +198,16 @@ $homeAuctions = array_slice(array_values(array_filter(getCommunityAuctions(), fu
           <h6 class="text-uppercase text-muted mb-2">Perjalanan Singkat</h6>
           <div class="timeline">
             <div class="t-item">
-              <div class="fw-semibold">2019 — Lahir di Depok</div>
-              <div class="small text-muted">Memulai dari komunitas lokal & scene kreatif independen.</div>
+              <div class="fw-semibold">Berawal dari Depok</div>
+              <div class="small text-muted">Tumbuh dari kepedulian pada sampah dan potensi guna ulang.</div>
             </div>
             <div class="t-item">
-              <div class="fw-semibold">Grow — Komunitas Bertumbuh</div>
-              <div class="small text-muted">Kolaborasi kecil, rilis terbatas, dan event pop-up.</div>
+              <div class="fw-semibold">Belajar dan Berbagi</div>
+              <div class="small text-muted">Panduan DIY dan kolaborasi membantu material menemukan fungsi baru.</div>
             </div>
             <div class="t-item">
-              <div class="fw-semibold">Now — Tetap Autentik</div>
-              <div class="small text-muted">Merayakan kebebasan berekspresi lewat rilisan yang relevan.</div>
+              <div class="fw-semibold">Bertumbuh Bersama</div>
+              <div class="small text-muted">Pembeli, seller, dan pelajar membangun kebiasaan yang lebih sirkular.</div>
             </div>
           </div>
         </div>
@@ -313,8 +311,8 @@ $homeAuctions = array_slice(array_values(array_filter(getCommunityAuctions(), fu
         </div>
         <div class="col-md-4">
           <div class="p-3 border rounded-3 h-100">
-            <div class="fw-semibold mb-1"><i class="fa-solid fa-shirt me-2 text-success"></i>Stylish & Tahan Lama</div>
-            <div class="small text-muted">Desain modern yang tetap nyaman dipakai, kuat, dan cocok untuk aktivitas sehari-hari.</div>
+            <div class="fw-semibold mb-1"><i class="fa-solid fa-shirt me-2 text-success"></i>Awet dan Dapat Digunakan Kembali</div>
+            <div class="small text-muted">Pilih, rawat, dan gunakan barang lebih lama sebelum mempertimbangkan pengganti.</div>
           </div>
         </div>
       </div>
