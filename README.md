@@ -72,7 +72,15 @@ Dengan akun seller, Anda bisa menambah, mengedit, dan menghapus produk sendiri.
 
 Buka `community.php` untuk mengakses panduan DIY, mengirim video kreasi, mengikuti lelang, melihat peringkat pembeli dan seller, serta mengikuti kompetisi sekolah. Pelanggan harus login untuk mengirim video, menawar lelang, atau mengirim misi sekolah.
 
-Admin dapat mengelola materi, lelang, event sekolah, skor tim, serta moderasi kiriman melalui **Admin > Kelola Komunitas**. Video kreasi maksimal 50 MB dalam format MP4, WebM, atau MOV. Pastikan konfigurasi PHP `upload_max_filesize` dan `post_max_size` mengizinkan unggahan sebesar itu.
+Admin dapat mengelola materi, lelang, event sekolah, skor tim, serta moderasi kiriman melalui **Admin > Kelola Komunitas**. Video kreasi maksimal 50 MB dalam format MP4, WebM, atau MOV. File [`.user.ini`](.user.ini) mengatur batas 50 MB untuk PHP CGI/FastCGI. Untuk XAMPP Apache yang memakai mod_php, ubah `upload_max_filesize=50M` dan `post_max_size=52M` di `php.ini`, lalu restart Apache. Halaman komunitas menampilkan batas efektif yang sedang digunakan server.
+
+Jika menjalankan PHP built-in server (`php -S`), pengaturan `php.ini` perlu diberikan saat server dimulai. Contoh dari folder project:
+
+```sh
+php -d upload_max_filesize=50M -d post_max_size=52M -d max_execution_time=120 -d max_input_time=120 -S localhost:8000
+```
+
+Restart server setelah mengubah konfigurasi agar batas baru aktif.
 
 Setiap order menambahkan biaya layanan 5% dari subtotal barang (di luar ongkir). Biaya ini ditampilkan di checkout, konfirmasi pesanan, dan invoice. Poin kreasi baru masuk setelah admin menyetujui video.
 
