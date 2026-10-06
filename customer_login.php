@@ -11,6 +11,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
   } else {
     $customer = getCustomerByPhone($phone);
     if($customer){
+      unset($_SESSION['is_admin'], $_SESSION['seller_logged_in'], $_SESSION['seller_id'], $_SESSION['seller_name']);
       $_SESSION['customer_id'] = (int)$customer['id'];
       $_SESSION['customer_name'] = $customer['name'];
       $_SESSION['customer_phone'] = $customer['phone'];

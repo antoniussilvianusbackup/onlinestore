@@ -16,6 +16,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     if($customer){
       $error = 'Nomor sudah terdaftar. Silakan login.';
     } else {
+      unset($_SESSION['is_admin'], $_SESSION['seller_logged_in'], $_SESSION['seller_id'], $_SESSION['seller_name']);
       $customer = upsertCustomerPoints([
         'name' => $name,
         'phone' => $phone,

@@ -22,6 +22,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   }
 
   if($canLogin){
+    foreach(['is_admin','customer_id','customer_name','customer_phone','customer_address','customer_city','customer_province','customer_postal_code','customer_points_balance','customer_voucher_count'] as $key){ unset($_SESSION[$key]); }
     $_SESSION['seller_logged_in'] = true;
     $_SESSION['seller_id'] = (int)$seller['id'];
     $_SESSION['seller_name'] = $seller['name'];

@@ -7,6 +7,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   $u = trim($_POST['username'] ?? '');
   $p = trim($_POST['password'] ?? '');
   if($u === ADMIN_USER && $p === ADMIN_PASS){
+    foreach(['customer_id','customer_name','customer_phone','customer_address','customer_city','customer_province','customer_postal_code','customer_points_balance','customer_voucher_count','seller_logged_in','seller_id','seller_name'] as $key){ unset($_SESSION[$key]); }
     $_SESSION['is_admin'] = true;
     header('Location: '.$next);
     exit;

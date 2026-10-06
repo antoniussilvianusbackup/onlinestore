@@ -484,6 +484,7 @@ $BASE_PATH = (strpos($_SERVER['PHP_SELF'], '/admin/') !== false) ? '../' : '';
 $cartItemCount = isset($_SESSION['cart']) ? array_sum(array_map(function($item){ return (int)($item['qty'] ?? 0); }, $_SESSION['cart'])) : 0;
 $isAdmin = !empty($_SESSION['is_admin']);
 $isCustomer = !empty($_SESSION['customer_id']);
+$isSeller = !empty($_SESSION['seller_logged_in']) && !empty($_SESSION['seller_id']);
 ?>
 
 <body>
@@ -504,22 +505,21 @@ $isCustomer = !empty($_SESSION['customer_id']);
               <i class="fa-solid fa-bag-shopping"></i><span class="site-cart-count"><?php echo $cartItemCount > 99 ? '99+' : (int)$cartItemCount; ?></span>
             </a>
           </li>
-          <?php if($isAdmin || $isCustomer): ?>
+          <?php if($isAdmin || $isCustomer || $isSeller): ?>
             <li class="nav-item dropdown">
               <button class="nav-link dropdown-toggle site-nav-link site-nav-toggle" id="accountMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fa-solid <?php echo $isAdmin ? 'fa-user-shield' : 'fa-user'; ?>"></i><span><?php echo $isAdmin ? 'Menu admin' : 'Akun'; ?></span>
+                <i class="fa-solid <?php echo $isAdmin ? 'fa-user-shield' : ($isSeller ? 'fa-store' : 'fa-user'); ?>"></i><span><?php echo $isAdmin ? 'Menu admin' : ($isSeller ? 'Menu seller' : 'Akun'); ?></span>
               </button>
               <ul class="dropdown-menu dropdown-menu-end site-nav-menu" aria-labelledby="accountMenu">
                 <?php if($isAdmin): ?>
                   <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>admin/products.php"><i class="fa-solid fa-box"></i>Kelola produk</a></li>
                   <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>admin/community.php"><i class="fa-solid fa-seedling"></i>Kelola komunitas</a></li>
                   <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>admin/orders.php"><i class="fa-solid fa-receipt"></i>Verifikasi pesanan</a></li>
-                <?php endif; ?>
-                <?php if($isCustomer): ?>
-                  <?php if($isAdmin): ?><li><hr class="dropdown-divider"></li><?php endif; ?>
+                <?php elseif($isSeller): ?>
+                  <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>seller_dashboard.php"><i class="fa-solid fa-store"></i>Dashboard seller</a></li>
+                <?php elseif($isCustomer): ?>
                   <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>account.php"><i class="fa-solid fa-circle-user"></i>Akun pelanggan</a></li>
                 <?php endif; ?>
-                <li><a class="dropdown-item" href="<?php echo $BASE_PATH; ?>seller_login.php"><i class="fa-solid fa-store"></i>Login seller</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-danger" href="<?php echo $BASE_PATH; ?>logout.php"><i class="fa-solid fa-right-from-bracket text-danger"></i>Keluar</a></li>
               </ul>
